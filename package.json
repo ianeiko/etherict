@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "colors": "^1.1.2",
+    "kraken-api": "git+https://github.com/nothingisdead/npm-kraken-api.git",
     "request": "^2.72.0"
   }
 }
