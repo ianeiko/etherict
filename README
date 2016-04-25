@@ -1,8 +1,11 @@
-# DATA SOURCE
+# Setup
+docker run -d -p 8888:8888 -v "$(pwd):/home/jovyan/work" jupyter/scipy-notebook
+
+## DATA SOURCE
 
 https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1405699200&end=9999999999&period=86400
 
-# examples
+## examples
  - https://github.com/panditanvita/BTCpredictor
  - https://github.com/stavros0/bitcoin-price-prediction
  - https://github.com/westrik/bitcoin
