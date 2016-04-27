@@ -11,25 +11,25 @@ var state = {
   bid: 0.016447, // $7.532726
   aboveBid: true,
   follow: false,
-  greatestChange: 0,
-  tailingChange: 0,
+  greatestDelta: 0,
+  tailingDelta: 0,
   last: 0,
-  change: 0
+  delta: 0
 }
 
 function updateState(last){
-  var change = (state.bid - last).toFixed(6);
+  var delta = (state.bid - last).toFixed(6);
   var newState = {
     last: last,
-    change: change,
+    delta: delta,
     aboveBid: (last >= state.bid)
   }
-  if(state.greatestChange < change) {
-    logMsg(`price at: ${state.last}, new greatestChange: ${change}`);
-    newState.greatestChange = change;
+  if(state.greatestDelta < delta) {
+    logMsg(`price at: ${state.last}, new greatestDelta: ${delta}`);
+    newState.greatestDelta = delta;
   }
-  if(state.greatestChange > 0) {
-    newState.tailingChange = ((change - (newState.greatestChange || state.greatestChange)) / last).toFixed(6);
+  if(state.greatestDelta > 0) {
+    newState.tailingDelta = ((delta - (newState.greatestDelta || state.greatestDelta)) / last).toFixed(6);
   }
   if(!state.follow && newState.aboveBid){
     newState.follow = true;
@@ -44,11 +44,11 @@ function updateState(last){
 
 function logInfo(){
   if(NOISY_LOGS){
-    logMsg(`price at: ${state.last}, price change: ${state.change}`);
+    logMsg(`price at: ${state.last}, price delta: ${state.delta}`);
   }
 
-  if (state.follow && state.tailingChange > 0) {
-    logMsg(`${state.tailingChange} since greatestChange: ${state.greatestChange}`);
+  if (state.follow && state.tailingDelta > 0) {
+    logMsg(`${state.tailingDelta} since greatestDelta: ${state.greatestDelta}`);
   }
 }
 
