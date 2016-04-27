@@ -29,5 +29,6 @@ function fetch_data() {
 }
 
 
-start_date = start_date - (HOURS_24 * 90);
+// start_date = start_date - (HOURS_24 * 90);
+start_date = start_date - (HOURS_24 * 1);
 fetch_data(start_date);
