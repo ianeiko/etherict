@@ -11,9 +11,8 @@ RUN apt-get update && apt-get install -y \
       libfreetype6-dev \
       libpng12-dev \
       libzmq3-dev \
+      make \
       pkg-config \
-      python3-dev \
-      python-dev \
       python-numpy \
       python-pip \
       software-properties-common \
@@ -23,6 +22,15 @@ RUN apt-get update && apt-get install -y \
       && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
+
+RUN curl -OL http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz \
+      && tar -xvzf ta-lib-0.4.0-src.tar.gz \
+      && cd ta-lib/ \
+      && ./configure --prefix=/usr \
+      && make \
+      && make install \
+
+RUN pip install --upgrade pip
 
 RUN pip --no-cache-dir install \
         numpy \
