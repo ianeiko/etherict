@@ -1,5 +1,6 @@
 var request = require('request');
 var fs = require('fs');
+var json2csv = require('json2csv');
 
 var MINUTES_5 = 5 * 60;
 var HOURS_24 = 24 * 60 * 60;
@@ -10,7 +11,7 @@ var period = MINUTES_5;
 var api_base_url = `https://poloniex.com/public?command=returnChartData&currencyPair=${currency_pair}&end=9999999999&period=${period}`;
 
 var DATA_DIR = 'data';
-var DATA_DEST = `${DATA_DIR}/${currency_pair}.json`;
+var DATA_DEST = `${DATA_DIR}/${currency_pair}`;
 
 function fetch_data() {
   var api_url = api_base_url + `&start=${start_date}`;
@@ -20,15 +21,26 @@ function fetch_data() {
     var parsedBody = JSON.parse(body);
     if(parsedBody.length <= 0) return;
 
-    fs.writeFile(DATA_DEST, body, (err) => {
+    fs.writeFile(`${DATA_DEST}.json`, body, (err) => {
       if(err) throw err;
 
-      console.log(`Added ${parsedBody.length} records to ${DATA_DEST}`);
+      console.log(`Added ${parsedBody.length} records to ${DATA_DEST}.json`);
+    });
+
+    var fields = ['date', 'high', 'low', 'open', 'close', 'volume', 'quoteVolume', 'weightedAverage'];
+    json2csv({ data: parsedBody, fields: fields }, function(err, csv) {
+      if (err) console.log(err);
+
+      fs.writeFile(`${DATA_DEST}.csv`, csv, (err) => {
+        if(err) throw err;
+
+        console.log(`Added ${parsedBody.length} records to ${DATA_DEST}.csv`);
+      });
     });
   });
 }
 
 
-// start_date = start_date - (HOURS_24 * 90);
-start_date = start_date - (HOURS_24 * 1);
+start_date = start_date - (HOURS_24 * 90);
+// start_date = start_date - (HOURS_24 * 1);
 fetch_data(start_date);

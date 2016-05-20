@@ -1,5 +1,5 @@
 node_modules/
-data/*.json
+data/
 kraken-config.js
 log.txt
 .ipynb_checkpoints/
