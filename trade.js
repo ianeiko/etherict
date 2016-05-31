@@ -62,12 +62,12 @@ function logMsg(msg){
 
 function monitorPrice(){
   kraken.api('Ticker', {'pair': 'ETHXBT'}, function(error, data) {
-      if(error) logMsg(`ERROR: ${error}`);
+    if(error) logMsg(`ERROR: ${error}`);
 
-      var last = data.result['XETHXXBT']['b'][0];
-      last = parseFloat(last);
-      updateState(last);
-      logInfo();
+    var last = data.result['XETHXXBT']['b'][0];
+    last = parseFloat(last);
+    updateState(last);
+    logInfo();
   });
 }
 

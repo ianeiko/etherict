@@ -3,7 +3,8 @@ var KrakenConfig = require('./kraken-config.js').config;
 var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
 var _ = require('underscore');
 
-var BACKTESTING = true;
+const BACKTESTING = false;
+const SIMULATE_LIVE = true;
 var budget = {
   'eth': 0,
   'btc': 0
@@ -20,70 +21,79 @@ function placeOrder(order){
   if (order.price <= 0) throw "Invalid order price";
   if (order.volume <= 0) throw "Invalid order volume";
 
-  // var budgetUsed = {};
-  // var currency = (order.type === 'sell') ? 'eth' : 'btc';
-  // budgetUsed[currency] = (order.type === 'sell') ? (order.volume * -1) : order.volume;
-  // updateBudget(budgetUsed);
-  placingOrder = true;
-
   // call api to place order
   if (BACKTESTING) {
     simulateOrder(order);
   } else {
+    placingOrder = true;
     placeOrderAPI(order);
   }
 }
 
 function placeOrderAPI(order, callback) {
-  // place order
-  // callback: record order id
-  placingOrder = false;
-  txid = 'txid123';
-  orders.push(txid);
-  return txid;
+  kraken.api('AddOrder', order, function(err, data){
+    if (err) throw err;
+
+    if (SIMULATE_LIVE) {
+      data.txid = 'tx1234';
+      console.log(`simulating order with ${data.txid}`);
+    }
+    if (data.txid) {
+      console.log('order placed: ', data.result.descr);
+      orders.push(data.txid);
+      placingOrder = false;
+    }
+  });
 }
 
 function checkOrders(){
   if (orders.length > 0) {
-    checkOrderAPI(orders[0]);
+    checkOpenOrders();
   }
 }
 
-function checkOrderAPI(txid) {
-  console.log(txid);
-  // callback from api
-  // if order closed, update budget
-  checkBudgetAPI();
+function checkOpenOrders(){
+  kraken.api('OpenOrders', {}, function(err, data){
+    if (err) throw err;
+    var openOrders = data.result.open;
+    orders = _.without(orders, openOrders);
+  });
 }
 
 function checkBudgetAPI(){
-  // callback: set budget
+  kraken.api('Balance', {}, function(err, data){
+    if (err) throw err;
+    updateBudget({'eth': parseFloat(data.result.XETH)});
+    updateBudget({'btc': parseFloat(data.result.XXBT)});
+  });
 }
 
 /* -------------------------------------------------- */
 /* BACKTESTING ONLY */
+var baseOrder = {
+  pair: 'ETHXBT',
+  ordertype: 'limit',
+  expiretm: 0, /* optional */
+  validate: true /* optional */
+}
 function sellAllEth(data){
   if(checkBudget('eth') <= 0) return;
-  placeOrder({
-    pair: 'ETHXBT',
+  var order = Object.assign({}, baseOrder, {
     type: 'sell',
-    ordertype: 'limit',
     price: data.close,
     volume: checkBudget('eth'),
-    validate: true /* optional */
-  });
+  })
+  placeOrder(order);
 }
 
 function sellAllBtc(data){
   if(checkBudget('btc') <= 0) return;
-  placeOrder({
-    pair: 'ETHXBT',
+  var order = Object.assign({}, baseOrder, {
     type: 'buy',
-    ordertype: 'limit',
     price: data.close,
     volume: checkBudget('btc'),
-    validate: true /* optional */
-  });
+  })
+  placeOrder(order);
 }
 
 function simulateOrder(order) {
@@ -95,8 +105,6 @@ function simulateOrder(order) {
     updateBudget({'eth': order.volume / order.price});
   }
   console.log(`${order.type} at ${order.price}; budget`, checkBudget());
-  orders = [];
-  placingOrder = false;
 }
 
 function checkBudget(currency){
@@ -109,11 +117,14 @@ function updateBudget(value){
   var currency = _.keys(value)[0];
   if (currency === 'eth' || currency === 'btc') {} else { throw "Invalid currency" };
   budget[currency] += value[currency];
+  console.log('budget updated: ', budget);
   return budget;
 }
 
 module.exports = {
   checkBudget,
+  checkBudgetAPI,
+  checkOrders,
   updateBudget,
   placeOrder,
   sellAllBtc,

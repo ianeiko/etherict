@@ -30,5 +30,7 @@ function onData(data){
   }
 }
 
+// orders.checkBudgetAPI();
+// orders.checkOrders();
 orders.updateBudget({'eth': 100});
 simulateMonitoring();

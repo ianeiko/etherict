@@ -10,3 +10,18 @@ https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1
  - https://github.com/panditanvita/BTCpredictor
  - https://github.com/stavros0/bitcoin-price-prediction
  - https://github.com/westrik/bitcoin
+
+
+
+
+
+
+# NOTES
+
+## backtest
+try using spread data: https://api.kraken.com/0/public/Spread?pair=XETHXXBT
+
+## live trading
+- change app to be async
+- wait for orders to (fake) clear
+- use expiration to expire orders
