@@ -34,25 +34,32 @@ function placeOrder(order){
 
 function placeOrderAPI(order, callback) {
   kraken.api('AddOrder', order, function(err, data){
-    if (err) throw err;
+    if (err) console.error(err);
 
-    if (SIMULATE_LIVE) {
-      data.txid = SAMPLE_TXID;
-      console.log(`simulating order with ${data.txid}`);
-    }
-    if (data.txid) {
-      console.log('order placed: ', data.result.descr);
-      orders.push(data.txid);
-      placingOrder = false;
+    try {
+      if (!data.result) return;
+      if (SIMULATE_LIVE) {
+        data.txid = SAMPLE_TXID;
+        console.log(`simulating order with ${data.txid}`);
+      }
+      if (data.txid) {
+        console.log('order placed: ', data.result.descr);
+        orders.push(data.txid);
+        placingOrder = false;
+      }
+    } catch(e) {
+      console.error(e)
     }
   });
 }
 
 function checkOrders(){
+  if (orders.length > 0) {
+    console.log('current orders: ', orders);
+  }
   if (orders.length === 1){
     when(checkOrderById(orders[0]))
-        .then((t) => orderClosed(t))
-        .then(() => console.log(checkBudget()));
+        .then((t) => orderClosed(t));
 
   } else if (orders.length > 0) {
     checkOpenOrders();
@@ -67,18 +74,21 @@ function orderClosed(order){
 
     // TODO - APPLY FEE!
     if (order.descr.type === 'sell') {
-      updateBudget({'btc': (order.vol_exec * -1)});
       updateBudget({'eth': (order.cost)});
+      updateBudget({'btc': (order.vol_exec * -1)});
     } else if (order.descr.type === 'buy') {
       updateBudget({'btc': (order.cost)});
       updateBudget({'eth': (order.vol_exec * -1)});
     }
+
+    // TODO - only clear order with match txid
+    orders = [];
   });
 }
 
 function checkOpenOrders(){
   kraken.api('OpenOrders', {}, function(err, data){
-    if (err) throw err;
+    if (err) console.error(err);
     var openOrders = data.result.open;
     orders = _.without(orders, openOrders);
   });
@@ -89,8 +99,9 @@ function checkOrderById(txid){
     kraken.api('QueryOrders', {
       txid
     }, function(err, data){
-      if (err) throw err;
-      var t = data.result[txid];
+      if (err) console.error(err);
+      var t = _.get(data, ['result', txid]);
+      if (!t) return;
       resolve(t);
     })
   });
@@ -98,9 +109,11 @@ function checkOrderById(txid){
 
 function checkBudgetAPI(){
   kraken.api('Balance', {}, function(err, data){
-    if (err) throw err;
-    updateBudget({'eth': parseFloat(data.result.XETH)});
-    updateBudget({'btc': parseFloat(data.result.XXBT)});
+    if (err) console.error(err);
+    var eth = parseFloat(_.get(data, 'result.XETH'));
+    var btc = parseFloat(_.get(data, 'result.XXBT'));
+    updateBudget({eth});
+    updateBudget({btc});
   });
 }
 

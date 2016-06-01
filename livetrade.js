@@ -12,6 +12,7 @@ function monitorPrice(){
     try {
       var close = _.get(data, 'result.XETHXXBT.c[0]');
       if(!close) return;
+      console.log(`[${new Date()}]: ${close}`)
       onData({
         close: close
       });
@@ -28,7 +29,6 @@ function onData(data){
 
 function planTrade(data){
   var action = strategy.shouldTrade(data);
-  console.log(action, data);
   if (action === 'sell') {
     orders.sellAllEth(data);
   } else if(action === 'buy') {
@@ -37,7 +37,5 @@ function planTrade(data){
 }
 
 orders.updateBudget({'eth': 1000});
-setInterval(() => {
-  monitorPrice();
-}(), 3 * 1000);
-
+monitorPrice();
+setInterval(monitorPrice, 30 * 1000);
