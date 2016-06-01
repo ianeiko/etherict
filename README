@@ -22,6 +22,18 @@ https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1
 try using spread data: https://api.kraken.com/0/public/Spread?pair=XETHXXBT
 
 ## live trading
-- change app to be async
-- wait for orders to (fake) clear
-- use expiration to expire orders
+
+# almost done
+- rewrite simulateOrder
+- use local budget
+- use 0.12% maker fee
+- keep track of orders locally
+
+# and then
+- scope orders using userref
+- add expiration to automatically expire orders
+
+## then
+- clear canceled, partially filled, and expired orders and reclaim budget
+- make app run on openshift
+- run with small budget and basic strategy

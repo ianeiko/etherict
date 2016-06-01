@@ -1,10 +1,12 @@
+var _ = require('lodash');
+var when = require('when');
 var KrakenClient = require('kraken-api');
 var KrakenConfig = require('./kraken-config.js').config;
 var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
-var _ = require('underscore');
 
 const BACKTESTING = false;
 const SIMULATE_LIVE = true;
+const SAMPLE_TXID = 'O4TOX7-YMLBP-IOH2S6';
 var budget = {
   'eth': 0,
   'btc': 0
@@ -35,7 +37,7 @@ function placeOrderAPI(order, callback) {
     if (err) throw err;
 
     if (SIMULATE_LIVE) {
-      data.txid = 'tx1234';
+      data.txid = SAMPLE_TXID;
       console.log(`simulating order with ${data.txid}`);
     }
     if (data.txid) {
@@ -47,9 +49,31 @@ function placeOrderAPI(order, callback) {
 }
 
 function checkOrders(){
-  if (orders.length > 0) {
+  if (orders.length === 1){
+    when(checkOrderById(orders[0]))
+        .then((t) => orderClosed(t))
+        .then(() => console.log(checkBudget()));
+
+  } else if (orders.length > 0) {
     checkOpenOrders();
   }
+}
+
+function orderClosed(order){
+  when.promise((resolve) => {
+    order.cost = parseFloat(order.cost);
+    order.vol_exec = parseFloat(order.vol_exec);
+    order.fee = parseFloat(order.fee);
+
+    // TODO - APPLY FEE!
+    if (order.descr.type === 'sell') {
+      updateBudget({'btc': (order.vol_exec * -1)});
+      updateBudget({'eth': (order.cost)});
+    } else if (order.descr.type === 'buy') {
+      updateBudget({'btc': (order.cost)});
+      updateBudget({'eth': (order.vol_exec * -1)});
+    }
+  });
 }
 
 function checkOpenOrders(){
@@ -57,6 +81,18 @@ function checkOpenOrders(){
     if (err) throw err;
     var openOrders = data.result.open;
     orders = _.without(orders, openOrders);
+  });
+}
+
+function checkOrderById(txid){
+  return when.promise((resolve, reject, notify) => {
+    kraken.api('QueryOrders', {
+      txid
+    }, function(err, data){
+      if (err) throw err;
+      var t = data.result[txid];
+      resolve(t);
+    })
   });
 }
 
