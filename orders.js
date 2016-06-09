@@ -5,8 +5,9 @@ var KrakenConfig = require('./kraken-config.js').config;
 var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
 
 const BACKTESTING = false;
-const SIMULATE_LIVE = true;
+const SIMULATE_LIVE = !BACKTESTING;
 const SAMPLE_TXID = 'O4TOX7-YMLBP-IOH2S6';
+var backtestingOrder = {};
 var budget = {
   'eth': 0,
   'btc': 0
@@ -25,35 +26,39 @@ function placeOrder(order){
 
   // call api to place order
   if (BACKTESTING) {
-    simulateOrder(order);
+    return simulateOrder(order);
   } else {
     placingOrder = true;
-    placeOrderAPI(order);
+    return placeOrderAPI(order);
   }
 }
 
-function placeOrderAPI(order, callback) {
-  kraken.api('AddOrder', order, function(err, data){
-    if (err) console.error(err);
+function placeOrderAPI(order) {
+  return when.promise(resolve => {
+    kraken.api('AddOrder', order, function(err, data){
+      if (err) console.error(err);
 
-    try {
-      if (!data.result) return;
-      if (SIMULATE_LIVE) {
-        data.txid = SAMPLE_TXID;
-        console.log(`simulating order with ${data.txid}`);
+      try {
+        if (!data.result) return;
+        if (SIMULATE_LIVE) {
+          data.txid = SAMPLE_TXID;
+          console.log(`simulating order with ${data.txid}`);
+        }
+        if (data.txid) {
+          console.log('order placed: ', data.result.descr);
+          orders.push(data.txid);
+          placingOrder = false;
+        }
+        resolve();
+      } catch(e) {
+        console.error(e)
       }
-      if (data.txid) {
-        console.log('order placed: ', data.result.descr);
-        orders.push(data.txid);
-        placingOrder = false;
-      }
-    } catch(e) {
-      console.error(e)
-    }
+    });
   });
 }
 
 function checkOrders(){
+  console.log('checking orders..')
   if (orders.length > 0) {
     console.log('current orders: ', orders);
   }
@@ -83,6 +88,7 @@ function orderClosed(order){
 
     // TODO - only clear order with match txid
     orders = [];
+    backtestingOrder = {};
   });
 }
 
@@ -96,6 +102,10 @@ function checkOpenOrders(){
 
 function checkOrderById(txid){
   return when.promise((resolve, reject, notify) => {
+    if (BACKTESTING) {
+      return resolve(backtestingOrder);
+    }
+
     kraken.api('QueryOrders', {
       txid
     }, function(err, data){
@@ -129,31 +139,47 @@ function sellAllEth(data){
   if(checkBudget('eth') <= 0) return;
   var order = Object.assign({}, baseOrder, {
     type: 'sell',
-    price: data.close,
-    volume: checkBudget('eth'),
-  })
-  placeOrder(order);
+    price: parseFloat(data.close),
+    volume: parseFloat(checkBudget('eth')),
+  });
+  return placeOrder(order);
 }
 
 function sellAllBtc(data){
   if(checkBudget('btc') <= 0) return;
   var order = Object.assign({}, baseOrder, {
     type: 'buy',
-    price: data.close,
-    volume: checkBudget('btc'),
-  })
-  placeOrder(order);
+    price: parseFloat(data.close),
+    volume: parseFloat(checkBudget('btc')),
+  });
+  return placeOrder(order);
 }
 
 function simulateOrder(order) {
-  if (order.type === 'sell' && checkBudget('eth') >= order.volume) {
-    updateBudget({'btc': (order.price * order.volume)});
-    updateBudget({'eth': (order.volume * -1)});
-  } else if (order.type === 'buy' && checkBudget('btc') >= order.volume) {
-    updateBudget({'btc': (order.volume * -1)});
-    updateBudget({'eth': order.volume / order.price});
-  }
-  console.log(`${order.type} at ${order.price}; budget`, checkBudget());
+  return when.promise(resolve => {
+    orders.push('BACKTESTING');
+    if (order.type === 'buy') {
+      backtestingOrder = {
+        descr: {
+          type: 'sell'
+        },
+        cost: (order.volume / order.price),
+        vol_exec: (order.volume),
+        // fee: use 0.12%
+      };
+    } else if (order.type === 'sell') {
+      backtestingOrder = {
+        descr: {
+          type: 'buy'
+        },
+        cost: (order.volume * order.price),
+        vol_exec: (order.volume),
+        // fee: use 0.12%
+      };
+    }
+    resolve();
+    console.log(`${order.type} at ${order.price}; budget`, checkBudget());
+  });
 }
 
 function checkBudget(currency){

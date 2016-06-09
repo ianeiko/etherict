@@ -61,9 +61,11 @@ function fetch_spread() {
 }
 
 if (process.env.FETCH_SPREAD){
+  console.log('fetching spread data')
   fetch_spread();
 } else {
   const START_DAYS = process.env.DAYS || 7;
   start_date = start_date - (HOURS_24 * START_DAYS);
+  console.log('fetching OHLC data')
   fetch_data();
 }

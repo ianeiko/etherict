@@ -10,9 +10,6 @@ function shouldTrade(data) {
     action = 'buy';
   }
 
-  // if(action === 'sell' && data.close < 0.021) action = null;
-  // if(action === 'buy' && data.close > 0.03) action = null;
-
   return action;
 }
 

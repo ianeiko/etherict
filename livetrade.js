@@ -6,6 +6,8 @@ var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
 var strategy = require('./strategy');
 var orders = require('./orders');
 
+const INITIAL_BALANCE = 1000;
+
 function monitorPrice(){
   kraken.api('Ticker', {'pair': 'ETHXBT'}, function(error, data) {
     if(error) console.error(`ERROR: ${error}`);
@@ -29,13 +31,15 @@ function onData(data){
 
 function planTrade(data){
   var action = strategy.shouldTrade(data);
+  var result;
   if (action === 'sell') {
-    orders.sellAllEth(data);
+    result = orders.sellAllEth(data);
   } else if(action === 'buy') {
-    orders.sellAllBtc(data);
+    result = orders.sellAllBtc(data);
   }
+  return when(result);
 }
 
-orders.updateBudget({'eth': 1000});
+orders.updateBudget({'eth': INITIAL_BALANCE});
 monitorPrice();
 setInterval(monitorPrice, 30 * 1000);

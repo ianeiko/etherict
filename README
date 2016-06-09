@@ -35,5 +35,5 @@ try using spread data: https://api.kraken.com/0/public/Spread?pair=XETHXXBT
 
 ## then
 - clear canceled, partially filled, and expired orders and reclaim budget
-- make app run on openshift
-- run with small budget and basic strategy
+- deploy app
+- develop strategy
