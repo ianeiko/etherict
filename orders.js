@@ -5,7 +5,7 @@ var KrakenConfig = require('./kraken-config.js').config;
 var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
 var request = require('request');
 
-const SIMULATE_ORDER = true;
+const SIMULATE_ORDER = false;
 var fauxOrder = {};
 var budget = {
   'eth': 0,
@@ -86,21 +86,13 @@ function simulateOrder(order) {
 }
 
 function placeOrderAPI(order) {
-  return when.promise(resolve => {
+  return when.promise((resolve, reject) => {
     kraken.api('AddOrder', order, function(err, data){
-      if (err) console.error(err);
-
-      try {
-        if (!data.result) return;
-        if (data.txid) {
-          console.log('order placed: ', data.result.descr);
-          orders.push(data.txid);
-          placingOrder = false;
-        }
-        resolve();
-      } catch(e) {
-        console.error(e)
-      }
+      if (err) reject(err);
+      if (!data.result || !data.txid || !data.result.descr) reject('Invalid response');
+      orders.push(data.txid);
+      placingOrder = false;
+      resolve(data.txid);
     });
   });
 }
@@ -145,26 +137,29 @@ function orderClosed(order){
 }
 
 function checkOpenOrders(){
-  kraken.api('OpenOrders', {}, function(err, data){
-    if (err) console.error(err);
-    var openOrders = data.result.open;
-    orders = _.without(orders, openOrders);
+  return when.promise((resolve, reject, notify) => {
+    kraken.api('OpenOrders', {}, function(err, data){
+      if (err) reject(err);
+      if (!data.result || !data.result.open) reject('Invalid response');
+      var openOrders = data.result.open;
+      orders = _.without(orders, openOrders);
+      resolve(orders);
+    });
   });
 }
 
 function checkOrderById(txid){
   return when.promise((resolve, reject, notify) => {
     if (SIMULATE_ORDER) {
-      return resolve(fauxOrder);
+      resolve(fauxOrder);
     }
 
     kraken.api('QueryOrders', {
       txid
     }, function(err, data){
-      if (err) console.error(err);
-      var t = _.get(data, ['result', txid]);
-      if (!t) return;
-      resolve(t);
+      if (err) reject(err);
+      if (!data.result || !data.result[txid]) reject('Invalid response');
+      resolve(data.result[txid]);
     })
   });
 }
@@ -196,7 +191,7 @@ function updateBudget(value){
   return budget;
 }
 
-module.exports = {
+var exports = {
   checkBudget,
   checkBudgetAPI,
   checkOrders,
@@ -205,3 +200,13 @@ module.exports = {
   sellAllBtc,
   sellAllEth
 }
+
+if(process.env.NODE_ENV === 'test') {
+  exports = Object.assign({}, exports, {
+    placeOrderAPI,
+    checkOpenOrders,
+    checkOrderById
+  });
+}
+
+module.exports = exports;

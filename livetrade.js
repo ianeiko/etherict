@@ -45,4 +45,4 @@ function planTrade(data){
 }
 
 orders.updateBudget({'eth': INITIAL_BALANCE});
-poll(monitorPrice, 30 * 1000);
+poll(monitorPrice, 3 * 1000);
