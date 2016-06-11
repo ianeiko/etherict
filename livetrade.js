@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var when = require('when');
+var poll = require('when/poll');
 var KrakenClient = require('kraken-api');
 var KrakenConfig = require('./kraken-config.js').config;
 var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
@@ -9,18 +10,21 @@ var orders = require('./orders');
 const INITIAL_BALANCE = 1000;
 
 function monitorPrice(){
-  kraken.api('Ticker', {'pair': 'ETHXBT'}, function(error, data) {
-    if(error) console.error(`ERROR: ${error}`);
-    try {
-      var close = _.get(data, 'result.XETHXXBT.c[0]');
-      if(!close) return;
-      console.log(`[${new Date()}]: ${close}`)
-      onData({
-        close: close
-      });
-    } catch (e) {
-      console.error(e);
-    }
+  return when.promise((resolve, reject, notify) => {
+    kraken.api('Ticker', {'pair': 'ETHXBT'}, function(error, data) {
+      if(error) console.error(`ERROR: ${error}`);
+      try {
+        var close = _.get(data, 'result.XETHXXBT.c[0]');
+        if(!close) return;
+        console.log(`[${new Date()}]: ${close}`)
+        onData({
+          close: close
+        });
+        resolve();
+      } catch (e) {
+        console.error(e);
+      }
+    });
   });
 }
 
@@ -41,5 +45,4 @@ function planTrade(data){
 }
 
 orders.updateBudget({'eth': INITIAL_BALANCE});
-monitorPrice();
-setInterval(monitorPrice, 30 * 1000);
+poll(monitorPrice, 30 * 1000);
