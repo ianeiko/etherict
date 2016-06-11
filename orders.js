@@ -3,6 +3,7 @@ var when = require('when');
 var KrakenClient = require('kraken-api');
 var KrakenConfig = require('./kraken-config.js').config;
 var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
+var request = require('request');
 
 const SIMULATE_ORDER = true;
 var fauxOrder = {};
@@ -169,12 +170,14 @@ function checkOrderById(txid){
 }
 
 function checkBudgetAPI(){
-  // kraken.api('Balance', {}, function(err, data){
-  //   if (err) console.error(err);
-  //   var eth = parseFloat(_.get(data, 'result.XETH'));
-  //   var btc = parseFloat(_.get(data, 'result.XXBT'));
-  //   updateBudget({eth, btc});
-  // });
+  return when.promise((resolve, reject, notify) => {
+    kraken.api('Balance', {}, function(err, data){
+      if (err) reject(err);
+      var eth = parseFloat(_.get(data, 'result.XETH'));
+      var btc = parseFloat(_.get(data, 'result.XXBT'));
+      resolve(updateBudget({eth, btc}));
+    });
+  });
 }
 
 function checkBudget(currency){
