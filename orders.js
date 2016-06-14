@@ -5,7 +5,7 @@ var KrakenConfig = require('./kraken-config.js').config;
 var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
 var request = require('request');
 
-const SIMULATE_ORDER = false;
+const SIMULATE_ORDER = process.env.SIMULATE_ORDER;
 var fauxOrder = {};
 var budget = {
   'eth': 0,
@@ -20,42 +20,46 @@ var baseOrder = {
   expiretm: 0, /* optional */
   validate: true /* optional */
 }
-function sellAllEth(data){
+
+function createSellAllEthOrder(data){
   if(checkBudget('eth') <= 0) return;
   var order = Object.assign({}, baseOrder, {
     type: 'sell',
     price: parseFloat(data.close),
     volume: parseFloat(checkBudget('eth')),
   });
-  return placeOrder(order);
+  return order;
 }
 
-function sellAllBtc(data){
+function createSellAllBtcOrder(data){
   if(checkBudget('btc') <= 0) return;
   var order = Object.assign({}, baseOrder, {
     type: 'buy',
     price: parseFloat(data.close),
     volume: parseFloat(checkBudget('btc')),
   });
-  return placeOrder(order);
+  return order;
 }
 
 function placeOrder(order){
-  if (placingOrder || orders.length > 0) return;
-  if (!order || !order.pair || !order.type || !order.ordertype || !order.ordertype || !order.volume) throw "Missing required order fields";
-  if (order.pair !== 'ETHXBT') throw "Invalid pair";
-  if (order.type === 'buy' || order.type === 'sell') {} else { throw "Invalid type" };
-  if (order.ordertype !== 'limit') throw "Unsupported ordertype";
-  if (order.price <= 0) throw "Invalid order price";
-  if (order.volume <= 0) throw "Invalid order volume";
+  return when.promise((resolve, reject) => {
+    if (!order || _.isUndefined(order) || _.isNull(order)) return reject('Missing order');
+    if (orders.length > 0 || placingOrder) return reject('Already placing order');
+    if (!order.pair || !order.type || !order.ordertype || !order.ordertype || !order.volume) return reject('Missing required order fields');
+    if (order.pair !== 'ETHXBT') return reject('Invalid pair');
+    if (order.type === 'buy' || order.type === 'sell') {} else { return reject('Invalid type') };
+    if (order.ordertype !== 'limit') return reject('Unsupported ordertype');
+    if (order.price <= 0) return reject('Invalid order price');
+    if (order.volume <= 0) return reject('Invalid order volume');
 
-  // call api to place order
-  if (SIMULATE_ORDER) {
-    return simulateOrder(order);
-  } else {
-    placingOrder = true;
-    return placeOrderAPI(order);
-  }
+    // call api to place order
+    if (SIMULATE_ORDER) {
+      return resolve(simulateOrder(order));
+    } else {
+      placingOrder = true;
+      return resolve(placeOrderAPI(order));
+    }
+  });
 }
 
 function simulateOrder(order) {
@@ -80,7 +84,7 @@ function simulateOrder(order) {
         // fee: use 0.12%
       };
     }
-    resolve();
+    return resolve(fauxOrder);
     console.log(`${order.type} at ${order.price}; budget`, checkBudget());
   });
 }
@@ -88,17 +92,17 @@ function simulateOrder(order) {
 function placeOrderAPI(order) {
   return when.promise((resolve, reject) => {
     kraken.api('AddOrder', order, function(err, data){
-      if (err) reject(err);
-      if (!data.result || !data.txid || !data.result.descr) reject('Invalid response');
+      if (err) return reject(err);
+      if (!data.result || !data.txid || !data.result.descr) return reject('Invalid response');
       orders.push(data.txid);
       placingOrder = false;
-      resolve(data.txid);
+      return resolve(data.txid);
     });
   });
 }
 
 function checkOrders(){
-  console.log('checking orders..')
+  console.log('checking orders..');
   if (orders.length > 0) {
     console.log('current orders: ', orders);
   }
@@ -139,11 +143,11 @@ function orderClosed(order){
 function checkOpenOrders(){
   return when.promise((resolve, reject, notify) => {
     kraken.api('OpenOrders', {}, function(err, data){
-      if (err) reject(err);
-      if (!data.result || !data.result.open) reject('Invalid response');
+      if (err) return reject(err);
+      if (!data.result || !data.result.open) return reject('Invalid response');
       var openOrders = data.result.open;
       orders = _.without(orders, openOrders);
-      resolve(orders);
+      return resolve(orders);
     });
   });
 }
@@ -151,15 +155,15 @@ function checkOpenOrders(){
 function checkOrderById(txid){
   return when.promise((resolve, reject, notify) => {
     if (SIMULATE_ORDER) {
-      resolve(fauxOrder);
+      return resolve(fauxOrder);
     }
 
     kraken.api('QueryOrders', {
       txid
     }, function(err, data){
-      if (err) reject(err);
-      if (!data.result || !data.result[txid]) reject('Invalid response');
-      resolve(data.result[txid]);
+      if (err) return reject(err);
+      if (!data.result || !data.result[txid]) return reject('Invalid response');
+      return resolve(data.result[txid]);
     })
   });
 }
@@ -167,10 +171,10 @@ function checkOrderById(txid){
 function checkBudgetAPI(){
   return when.promise((resolve, reject, notify) => {
     kraken.api('Balance', {}, function(err, data){
-      if (err) reject(err);
+      if (err) return reject(err);
       var eth = parseFloat(_.get(data, 'result.XETH'));
       var btc = parseFloat(_.get(data, 'result.XXBT'));
-      resolve(updateBudget({eth, btc}));
+      return resolve(updateBudget({eth, btc}));
     });
   });
 }
@@ -191,21 +195,33 @@ function updateBudget(value){
   return budget;
 }
 
+function reset(){
+  budget = {
+    'eth': 0,
+    'btc': 0
+  }
+  orders = [];
+  fauxOrder = {};
+  placingOrder = false;
+  return budget;
+}
+
 var exports = {
   checkBudget,
   checkBudgetAPI,
   checkOrders,
   updateBudget,
   placeOrder,
-  sellAllBtc,
-  sellAllEth
+  createSellAllBtcOrder,
+  createSellAllEthOrder
 }
 
 if(process.env.NODE_ENV === 'test') {
   exports = Object.assign({}, exports, {
     placeOrderAPI,
     checkOpenOrders,
-    checkOrderById
+    checkOrderById,
+    reset
   });
 }
 

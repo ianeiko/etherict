@@ -4,7 +4,9 @@
   "description": "https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1405699200&end=9999999999&period=86400",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test mocha"
+    "test": "SIMULATE_ORDER=true NODE_ENV=test mocha",
+    "backtest": "SIMULATE_ORDER=true BACKTESTING=true node index.js",
+    "trade": "SIMULATE_ORDER=true node index.js"
   },
   "author": "",
   "license": "ISC",

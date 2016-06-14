@@ -1,0 +1,3 @@
+{ "error": [],
+  "result": { "descr": { "order": "sell 1000.00000000 ETHXBT @ limit 0.024189" } },
+  "txid": "TEST_ORDER_TXID" }

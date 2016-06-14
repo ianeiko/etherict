@@ -1,0 +1,29 @@
+{ "error": [],
+  "result":
+   { "TEST_ORDER_TXID":
+      { "refid": null,
+        "userref": null,
+        "status": "closed",
+        "reason": null,
+        "opentm": 1463121228.4524,
+        "closetm": 1463200419.8892,
+        "starttm": 0,
+        "expiretm": 0,
+        "descr":
+          { "pair": "ETHXBT",
+            "type": "buy",
+            "ordertype": "limit",
+            "price": "0.022000",
+            "price2": "0",
+            "leverage": "none",
+            "order": "buy 1000.00000000 ETHXBT @ limit 0.022000" },
+        "vol": "1000.00000000",
+        "vol_exec": "1000.00000000",
+        "cost": "22.000000",
+        "fee": "0.030800",
+        "price": "0.022000",
+        "misc": "",
+        "oflags": "fciq"
+      }
+    }
+}

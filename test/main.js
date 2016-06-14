@@ -1,36 +1,36 @@
 var expect = require('chai').expect;
 var orders = require('../orders');
 var nock = require('nock');
-var server;
 
-var orderMock = { error: [],
-                        result:
-                         { 'TEST_ORDER_TXID':
-                            { refid: null,
-                              userref: null,
-                              status: 'closed',
-                              reason: null,
-                              opentm: 1463121228.4524,
-                              closetm: 1463200419.8892,
-                              starttm: 0,
-                              expiretm: 0,
-                              descr:
-                                { pair: 'ETHXBT',
-                                  type: 'buy',
-                                  ordertype: 'limit',
-                                  price: '0.022000',
-                                  price2: '0',
-                                  leverage: 'none',
-                                  order: 'buy 1000.00000000 ETHXBT @ limit 0.022000' },
-                              vol: '1000.00000000',
-                              vol_exec: '1000.00000000',
-                              cost: '22.000000',
-                              fee: '0.030800',
-                              price: '0.022000',
-                              misc: '',
-                              oflags: 'fciq' } } };
+var orderMock = require('./mocks/order.json')
+var balanceMock = require('./mocks/balance.json')
+var placeOrderMock = require('./mocks/place_order.json')
+
+function setupServer(options){
+  var defaultOptions = {
+    api_method: 'Balance',
+    api_type: 'private',
+    http_status: 200,
+    method: 'post',
+    response: {}
+  }
+  options = Object.assign({}, defaultOptions, options);
+  before(() => {
+    nock('https://api.kraken.com')
+        .post(`/0/${options.api_type}/${options.api_method}`)
+        .reply(options.http_status, options.response);
+  });
+}
 
 describe('Orders', () => {
+  beforeEach(() => {
+    orders.reset();
+  });
+  afterEach(() => {
+    nock.cleanAll();
+    orders.reset();
+  });
+
   describe('checkBudget', () => {
     it('returns budget', () => {
       var budget = orders.checkBudget();
@@ -39,21 +39,10 @@ describe('Orders', () => {
   });
 
   describe('checkBudgetAPI', () => {
-    before(() => {
-      var response = { error: [],
-                        result:
-                         { ZUSD: '0',
-                           XXBT: '0',
-                           XETH: '0' } };
-
-      nock('https://api.kraken.com')
-          .post('/0/private/Balance')
-          .reply(200, response);
+    setupServer({
+      api_method: 'Balance',
+      response: balanceMock
     });
-
-    after(() => {
-      nock.cleanAll();
-    })
 
     it('returns budget', () => {
       return orders.checkBudgetAPI()
@@ -64,69 +53,75 @@ describe('Orders', () => {
 
   });
 
-  describe('placeOrderAPI', () => {
-    before(() => {
-      var response = { error: [],
-                        result: { descr: { order: 'sell 1000.00000000 ETHXBT @ limit 0.024189' } },
-                        txid: 'TEST_ORDER_TXID' };
-
-      nock('https://api.kraken.com')
-          .post('/0/private/AddOrder')
-          .reply(200, response);
+  describe('placeOrder', () => {
+    it('createSellAllEthOrder -> placeOrder', () => {
+      var expectedOrder = { descr: { type: 'buy' }, cost: 100, vol_exec: 100 };
+      orders.updateBudget({'eth': 100});
+      var order = orders.createSellAllEthOrder({close: 1 });
+      console.log(orders.placeOrder);
+      return orders.placeOrder(order)
+                    .then(placedOrder => {
+                      expect(placedOrder).to.eql(expectedOrder);
+                    });
     });
-
-    after(() => {
-      nock.cleanAll();
-    })
-
-    it('returns transaction id', () => {
-      var order = {};
-      return orders.placeOrderAPI(order)
-            .then((res) => {
-              expect(res).to.eql('TEST_ORDER_TXID');
-            });
+    it('createSellAllBtcOrder -> placeOrder', () => {
+      var expectedOrder = { descr: { type: 'sell' }, cost: 100, vol_exec: 100 };
+      orders.updateBudget({'btc': 100});
+      var order = orders.createSellAllBtcOrder({close: 1 });
+      return orders.placeOrder(order)
+                    .then(placedOrder => {
+                      expect(placedOrder).to.eql(expectedOrder);
+                    });
     });
-
   });
 
-  describe('OpenOrders', () => {
-    before(() => {
+  describe('placeOrderAPI -> checkOpenOrders -> checkOrderById', () => {
+
+    it('placeOrderAPI', () => {
+      setupServer({
+        api_method: 'AddOrder',
+        response: placeOrderMock
+      });
+
+      it('returns transaction id', () => {
+        var order = {};
+        return orders.placeOrderAPI(order)
+              .then((res) => {
+                expect(res).to.eql('TEST_ORDER_TXID');
+              });
+      });
+    });
+
+    it('checkOpenOrders', () => {
       var response = { error: [], result: { open: {} } };
-      nock('https://api.kraken.com')
-          .post('/0/private/OpenOrders')
-          .reply(200, response);
+      setupServer({
+        api_method: 'OpenOrders',
+        response: response
+      });
+
+      it('returns opens order transaction id', () => {
+        return orders.checkOpenOrders()
+              .then((res) => {
+                expect(res).to.eql(['TEST_ORDER_TXID']);
+              });
+      });
+
     });
 
-    after(() => {
-      nock.cleanAll();
-    })
+    it('checkOrderById', () => {
+      setupServer({
+        api_method: 'QueryOrders',
+        response: orderMock
+      });
 
-    it('returns opens order transaction id', () => {
-      return orders.checkOpenOrders()
-            .then((res) => {
-              expect(res).to.eql(['TEST_ORDER_TXID']);
-            });
-    });
+      it('returns order', () => {
+        var txid = 'TEST_ORDER_TXID';
+        return orders.checkOrderById(txid)
+              .then((res) => {
+                expect(res).to.eql(orderMock.result['TEST_ORDER_TXID']);
+              });
+      });
 
-  });
-
-  describe('QueryOrders', () => {
-    before(() => {
-      nock('https://api.kraken.com')
-          .post('/0/private/QueryOrders')
-          .reply(200, orderMock);
-    });
-
-    after(() => {
-      nock.cleanAll();
-    })
-
-    it('returns order', () => {
-      var txid = 'TEST_ORDER_TXID';
-      return orders.checkOrderById(txid)
-            .then((res) => {
-              expect(res).to.eql(orderMock.result['TEST_ORDER_TXID']);
-            });
     });
 
   });
