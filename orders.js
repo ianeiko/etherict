@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var when = require('when');
+var fs = require('fs');
 var KrakenClient = require('kraken-api');
 var KrakenConfig = require('./kraken-config.js').config;
 var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
@@ -65,25 +66,21 @@ function placeOrder(order){
 function simulateOrder(order) {
   return when.promise(resolve => {
     orders.push('SIMULATE_ORDER');
+
     if (order.type === 'buy') {
-      fauxOrder = {
-        descr: {
-          type: 'sell'
-        },
-        cost: (order.volume / order.price),
-        vol_exec: (order.volume),
-        // fee: use 0.12%
-      };
+      var cost = (order.volume / order.price);
+      var type = 'sell';
     } else if (order.type === 'sell') {
-      fauxOrder = {
-        descr: {
-          type: 'buy'
-        },
-        cost: (order.volume * order.price),
-        vol_exec: (order.volume),
-        // fee: use 0.12%
-      };
+      var cost = (order.volume * order.price);
+      var type = 'buy';
     }
+    fauxOrder = {
+      descr: {
+        type: type
+      },
+      cost,
+      vol_exec: order.volume,
+    };
     return resolve(fauxOrder);
     console.log(`${order.type} at ${order.price}; budget`, checkBudget());
   });
@@ -102,7 +99,6 @@ function placeOrderAPI(order) {
 }
 
 function checkOrders(){
-  console.log('checking orders..');
   if (orders.length > 0) {
     console.log('current orders: ', orders);
   }
@@ -119,17 +115,21 @@ function orderClosed(order){
   when.promise((resolve) => {
     order.cost = parseFloat(order.cost);
     order.vol_exec = parseFloat(order.vol_exec);
-    order.fee = parseFloat(order.fee);
+    if (SIMULATE_ORDER) {
+      order.fee = order.cost * .0016;
+    } else {
+      order.fee = parseFloat(order.fee);
+    }
 
     // TODO - APPLY FEE!
     if (order.descr.type === 'sell') {
       updateBudget({
         'btc': (order.vol_exec * -1),
-        'eth': (order.cost)
+        'eth': (order.cost - order.fee)
       });
     } else if (order.descr.type === 'buy') {
       updateBudget({
-        'btc': (order.cost),
+        'btc': (order.cost - order.fee),
         'eth': (order.vol_exec * -1)
       });
     }
@@ -191,8 +191,14 @@ function updateBudget(value){
     if (currency === 'eth' || currency === 'btc') {} else { throw "Invalid currency" };
     budget[currency] += value[currency];
   })
-  console.log('budget updated: ', budget);
+  logMsg(`budget updated: ${JSON.stringify(budget)}`);
   return budget;
+}
+
+function logMsg(msg){
+  msg = `[${new Date()}]: ${msg}`;
+  fs.appendFile('log.txt', `${msg}\n`);
+  console.log(msg);
 }
 
 function reset(){

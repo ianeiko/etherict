@@ -64,7 +64,7 @@ function onData(data){
         return planTrade(data);
       })
       .then(order => {
-        return orders.placeOrder(order);
+        return (order) ? orders.placeOrder(order) : true;
       })
       .catch(err => {
         console.error(err);
