@@ -3,7 +3,7 @@ var when = require('when');
 if (process.env.BACKTESTING) {
   var fs = require('fs');
   const TRAINING_DATA = './data/BTC_ETH.json';
-  const TRADE_FREQUENCY = 30;
+  const TRADE_FREQUENCY = 10;
 } else {
   var KrakenClient = require('kraken-api');
   var KrakenConfig = require('./kraken-config.js').config;
@@ -25,7 +25,7 @@ function simulateMonitoring(){
       return i >= data.length;
     }, function(i) {
       if (i % TRADE_FREQUENCY === 0){
-        onData({
+        return onData({
           close: data[i].close
         });
       }
@@ -59,27 +59,27 @@ function monitorPrice(){
 }
 
 function onData(data){
-  when(orders.checkOrders())
-      .then(() => {
-        return planTrade(data);
-      })
-      .then(order => {
-        return (order) ? orders.placeOrder(order) : true;
-      })
-      .catch(err => {
-        console.error(err);
-      });
+  return when(orders.checkOrders())
+            .then(() => {
+              return strategy.shouldTrade(data)
+            })
+            .then(action => {
+              return planTrade(data, action);
+            })
+            .then(order => {
+              return (order) ? orders.placeOrder(order) : false;
+            })
+            .catch(err => {
+              console.error(err);
+            });
 }
 
-function planTrade(data){
-  var action = strategy.shouldTrade(data);
-  var order;
+function planTrade(data, action){
   if (action === 'sell') {
-    order = orders.createSellAllEthOrder(data);
+    return orders.createSellAllEthOrder(data);
   } else if(action === 'buy') {
-    order = orders.createSellAllBtcOrder(data);
+    return orders.createSellAllBtcOrder(data);
   }
-  return order;
 }
 
 orders.updateBudget({'eth': INITIAL_BALANCE});

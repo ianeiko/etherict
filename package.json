@@ -6,7 +6,8 @@
   "scripts": {
     "test": "SIMULATE_ORDER=true NODE_ENV=test mocha",
     "backtest": "SIMULATE_ORDER=true BACKTESTING=true node index.js",
-    "trade": "SIMULATE_ORDER=true supervisor index.js"
+    "trade": "SIMULATE_ORDER=true supervisor index.js",
+    "import": "node import.js"
   },
   "author": "",
   "license": "ISC",
@@ -19,7 +20,9 @@
     "nock": "^8.0.0",
     "request": "^2.72.0",
     "supervisor": "^0.11.0",
-    "when": "^3.7.7"
+    "talib": "^1.0.2",
+    "when": "^3.7.7",
+    "yargs": "^4.7.1"
   },
   "devDependencies": {
     "mocha": "^2.5.3",

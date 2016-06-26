@@ -66,6 +66,7 @@ function placeOrder(order){
 function simulateOrder(order) {
   return when.promise(resolve => {
     orders.push('SIMULATE_ORDER');
+    logMsg(`${order.type}ing at ${order.price}`);
 
     if (order.type === 'buy') {
       var cost = (order.volume / order.price);
@@ -99,9 +100,6 @@ function placeOrderAPI(order) {
 }
 
 function checkOrders(){
-  if (orders.length > 0) {
-    console.log('current orders: ', orders);
-  }
   if (orders.length === 1){
     when(checkOrderById(orders[0]))
         .then((t) => orderClosed(t));
