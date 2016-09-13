@@ -1,9 +1,9 @@
-var _ = require('lodash')
-var when = require('when');
-var talib = require('talib');
-var orders = require('./orders');
+const _ = require('lodash')
+const when = require('when');
+const talib = require('talib');
+const orders = require('./orders');
+const DATA_BUFFER_SIZE = 3000;
 var dataBuff = [];
-const DATA_BUFFER_SIZE = 28;
 
 function shouldTrade(data) {
   var action;
@@ -22,7 +22,7 @@ function shouldTrade(data) {
     startIdx: 0,
     endIdx: closeData.length - 1,
     inReal: closeData,
-    optInTimePeriod: 2
+    optInTimePeriod: DATA_BUFFER_SIZE
   }
   var sma = Object.assign(
     {name: 'SMA'},
@@ -37,12 +37,13 @@ function shouldTrade(data) {
         var buy_price = data.close + (data.close * .0016);
         var sell_price = data.close - (data.close * .0016);
 
-        var should_buy = (data.sma - buy_price) > (buy_price * .015);
-        var should_sell = (buy_price - data.sma) > (buy_price * .015);
+        var should_buy = (data.sma - buy_price) > (buy_price * .1);
+        var should_sell = (sell_price - data.sma) > (sell_price * .1);
 
-        if(should_buy) {
+        if(should_buy && !should_sell) {
           action = 'sell';
-        } else if(should_sell) {
+        }
+        if(!should_buy && should_sell) {
           action = 'buy';
         }
         return resolve(action);

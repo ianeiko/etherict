@@ -1,13 +1,13 @@
-var expect = require('chai').expect;
-var orders = require('../orders');
-var nock = require('nock');
+const expect = require('chai').expect;
+const orders = require('../src/orders');
+const nock = require('nock');
 
-var orderMock = require('./mocks/order.json')
-var balanceMock = require('./mocks/balance.json')
-var placeOrderMock = require('./mocks/place_order.json')
+const orderMock = require('./mocks/order.json')
+const balanceMock = require('./mocks/balance.json')
+const placeOrderMock = require('./mocks/place_order.json')
 
 function setupServer(options){
-  var defaultOptions = {
+  const defaultOptions = {
     api_method: 'Balance',
     api_type: 'private',
     http_status: 200,

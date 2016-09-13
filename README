@@ -18,19 +18,7 @@ https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1
 
 # TODO
 
-
-## first
-- test public methods from orders (remaining: checkOrders, updateBudget, simulateOrder orderClosed)
-- test entire livetesting and backtesting flow
-- rewrite simulateOrder
-
 ## later
-- use remote budget w/reserve
-- use 0.12% maker fee
-- develop strategy
 - scope orders using userref
 - add expiration to automatically expire orders
-
-## then
 - clear canceled, partially filled, and expired orders
-- deploy app

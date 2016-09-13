@@ -1,10 +1,10 @@
-var _ = require('lodash');
-var when = require('when');
-var fs = require('fs');
-var KrakenClient = require('kraken-api');
-var KrakenConfig = require('./kraken-config.js').config;
-var kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
-var request = require('request');
+const _ = require('lodash');
+const when = require('when');
+const fs = require('fs');
+const KrakenClient = require('kraken-api');
+const KrakenConfig = require('./kraken-config.js').config;
+const kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
+const request = require('request');
 
 const SIMULATE_ORDER = process.env.SIMULATE_ORDER;
 var fauxOrder = {};
@@ -15,7 +15,7 @@ var budget = {
 var orders = [];
 var placingOrder = false;
 
-var baseOrder = {
+const baseOrder = {
   pair: 'ETHXBT',
   ordertype: 'limit',
   expiretm: 0, /* optional */
@@ -75,6 +75,7 @@ function simulateOrder(order) {
       var cost = (order.volume * order.price);
       var type = 'buy';
     }
+    logMsg(`order cost is: ${cost}`);
     fauxOrder = {
       descr: {
         type: type
@@ -99,14 +100,15 @@ function placeOrderAPI(order) {
   });
 }
 
-function checkOrders(){
-  if (orders.length === 1){
-    when(checkOrderById(orders[0]))
-        .then((t) => orderClosed(t));
-
-  } else if (orders.length > 0) {
-    checkOpenOrders();
+async function checkOrders(){
+  if (orders.length !== 1) return;
+  try {
+    let trade = await checkOrderById(orders[0]);
+    await orderClosed(trade);
+  } catch(err) {
+    console.error(err);
   }
+
 }
 
 function orderClosed(order){

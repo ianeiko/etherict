@@ -4,10 +4,11 @@
   "description": "https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1405699200&end=9999999999&period=86400",
   "main": "index.js",
   "scripts": {
-    "test": "SIMULATE_ORDER=true NODE_ENV=test mocha",
-    "backtest": "SIMULATE_ORDER=true BACKTESTING=true node index.js",
-    "trade": "SIMULATE_ORDER=true supervisor index.js",
-    "import": "node import.js"
+    "build": "babel src -d dist",
+    "test": "SIMULATE_ORDER=true NODE_ENV=test mocha --compilers js:babel-register",
+    "backtest": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js",
+    "trade": "SIMULATE_ORDER=true supervisor dist/livetrade.js",
+    "import": "babel-node src/import.js"
   },
   "author": "",
   "license": "ISC",
@@ -25,6 +26,7 @@
     "yargs": "^4.7.1"
   },
   "devDependencies": {
+    "babel-cli": "^6.10.1",
     "mocha": "^2.5.3",
     "should": "^9.0.0"
   }
