@@ -2,7 +2,8 @@ const _ = require('lodash')
 const when = require('when');
 const talib = require('talib');
 const orders = require('./orders');
-const DATA_BUFFER_SIZE = 3000;
+const history = require('./history');
+const DATA_BUFFER_SIZE = 7;
 var dataBuff = [];
 
 function shouldTrade(data) {
@@ -12,6 +13,12 @@ function shouldTrade(data) {
     dataBuff.shift();
   }
 
+  if (dataBuff.length === 0) {
+    history.recordInitialPrice(data.close);
+  }
+  if (data.delta) {
+    history.recordPriceDelta(data.delta);
+  }
   dataBuff.push(data);
 
   var closeData = [];

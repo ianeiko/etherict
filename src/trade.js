@@ -1,6 +1,7 @@
 const when = require('when');
 const orders = require('./orders');
 const strategy = require('./strategy');
+const history = require('./history');
 
 async function onData(data){
   try {
@@ -16,10 +17,15 @@ async function onData(data){
 }
 
 function planTrade(data, action){
+  let order;
   if (action === 'sell') {
-    return orders.createSellAllEthOrder(data);
+    order = orders.createSellAllEthOrder(data);
   } else if(action === 'buy') {
-    return orders.createSellAllBtcOrder(data);
+    order = orders.createSellAllBtcOrder(data);
+  }
+  if (order) {
+    history.recordOrder(order);
+    return order;
   }
 }
 
