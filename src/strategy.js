@@ -4,60 +4,66 @@ const talib = require('talib');
 const orders = require('./orders');
 const history = require('./history');
 const DATA_BUFFER_SIZE = 7;
-var dataBuff = [];
+var closeData = [];
 
-function shouldTrade(data) {
-  var action;
+async function shouldTrade(data) {
+  closeData.push(data.close);
 
-  if(dataBuff.length >= DATA_BUFFER_SIZE) {
-    dataBuff.shift();
-  }
-
-  if (dataBuff.length === 0) {
-    history.recordInitialPrice(data.close);
-  }
-  if (data.delta) {
-    history.recordPriceDelta(data.delta);
-  }
-  dataBuff.push(data);
-
-  var closeData = [];
-  _.map(dataBuff, idx => {
-    closeData.push(idx.close)
-  });
-  var baseConfig = {
-    startIdx: 0,
+  let startIdx = closeData.length - DATA_BUFFER_SIZE;
+  startIdx = (startIdx > 0) ? startIdx : 0;
+  let baseConfig = {
+    startIdx,
     endIdx: closeData.length - 1,
     inReal: closeData,
     optInTimePeriod: DATA_BUFFER_SIZE
   }
-  var sma = Object.assign(
-    {name: 'SMA'},
+  let sma1 = Object.assign(
+    {
+      name: 'SMA',
+      optInTimePeriod: DATA_BUFFER_SIZE
+    },
     baseConfig
   )
+  data.sma1 = await talib_calc(sma1);
+  // let sma2 = Object.assign(
+  //   {
+  //     name: 'SMA',
+  //     optInTimePeriod: DATA_BUFFER_SIZE * 3
+  //   },
+  //   baseConfig
+  // )
+  // data.sma2 = await talib_calc(sma2);
 
   return when.promise((resolve, reject) => {
-    if(dataBuff.length >= DATA_BUFFER_SIZE) {
-      talib.execute(sma, function(result){
-        data.sma = _.last(result.result.outReal);
+    if(closeData.length >= DATA_BUFFER_SIZE) {
+      when.promise(() => {
+        let action;
 
-        var buy_price = data.close + (data.close * .0016);
-        var sell_price = data.close - (data.close * .0016);
+        let buy_price = data.close + (data.close * .0016);
+        let sell_price = data.close - (data.close * .0016);
 
-        var should_buy = (data.sma - buy_price) > (buy_price * .1);
-        var should_sell = (sell_price - data.sma) > (sell_price * .1);
+        let should_buy = (data.sma1 - buy_price) > (buy_price * .1);
+        let should_sell = (sell_price - data.sma1) > (sell_price * .1);
 
-        if(should_buy && !should_sell) {
+        if(should_buy) {
           action = 'sell';
-        }
-        if(!should_buy && should_sell) {
+        } else if (should_sell) {
           action = 'buy';
         }
         return resolve(action);
-      });
+      })
     } else {
       return reject('filling buffer');
     }
+  })
+}
+
+function talib_calc(parameter){
+  return new Promise((resolve, reject) => {
+    talib.execute(parameter, function(result){
+      let outReal = _.last(result.result.outReal);
+      resolve(outReal);
+    })
   })
 }
 

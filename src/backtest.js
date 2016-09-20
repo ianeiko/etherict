@@ -23,15 +23,21 @@ function simulateMonitoring(){
       return i >= data.length;
     }, function(i) {
       if (i % TRADE_FREQUENCY === 0){
-
+        let close = data[i].close;
         let delta;
+
+        if (i === 0) {
+          history.recordInitialPrice(close);
+        }
+
         if (i > 0) {
-          let lastMark = data[i-1];
-          delta = data[i].close - lastMark.close;
+          let lastMark = data[i - TRADE_FREQUENCY];
+          delta = close - lastMark.close;
+          history.recordPriceDelta(delta);
         }
 
         return trade.onData({
-          close: data[i].close,
+          close,
           delta
         });
       }
