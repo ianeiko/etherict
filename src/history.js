@@ -29,6 +29,10 @@ function getOrderHistory() {
   return orderHistory;
 }
 
+function getLastOrder() {
+  return _.last(orderHistory);
+}
+
 module.exports = {
   recordOrder,
   getOrderHistory,
@@ -36,4 +40,5 @@ module.exports = {
   getInitialPrice,
   recordPriceDelta,
   getPriceDeltaHistory,
+  getLastOrder
 }

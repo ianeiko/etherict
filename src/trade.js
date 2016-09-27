@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const when = require('when');
 const orders = require('./orders');
 const strategy = require('./strategy');
@@ -18,9 +19,12 @@ async function onData(data){
 
 function planTrade(data, action){
   let order;
-  if (action === 'sell') {
+  if (action === 'exit') {
     order = orders.createSellAllEthOrder(data);
-  } else if(action === 'buy') {
+  } else if(action === 'stop_loss') {
+    data = _.merge( data, { stop_loss: true });
+    order = orders.createSellAllEthOrder(data);
+  } else if(action === 'enter') {
     order = orders.createSellAllBtcOrder(data);
   }
   if (order) {

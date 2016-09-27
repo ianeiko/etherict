@@ -24,17 +24,22 @@ const baseOrder = {
 
 function createSellAllEthOrder(data){
   if(checkBudget('eth') <= 0) return;
-  var order = Object.assign({}, baseOrder, {
+  let stop_loss = data.stop_loss;
+  let order = Object.assign({}, baseOrder, {
+    stop_loss,
+    position: 'exit',
     type: 'sell',
     price: parseFloat(data.close),
     volume: parseFloat(checkBudget('eth')),
   });
+  order = _.omitBy(order, _.isNil);
   return order;
 }
 
 function createSellAllBtcOrder(data){
   if(checkBudget('btc') <= 0) return;
   var order = Object.assign({}, baseOrder, {
+    position: 'enter',
     type: 'buy',
     price: parseFloat(data.close),
     volume: parseFloat(checkBudget('btc')),

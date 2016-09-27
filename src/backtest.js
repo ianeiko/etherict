@@ -4,7 +4,9 @@ const fs = require('fs');
 const ubique = require('ubique');
 const TRAINING_DATA = './data/BTC_ETH.json';
 const TRADE_FREQUENCY = 288; // DAY
+// const TRADE_FREQUENCY = 144; // 12 HOURS
 // const TRADE_FREQUENCY = 12; // HOUR
+// const TRADE_FREQUENCY = 1; // 5 MINUTES
 
 const trade = require('./trade');
 const orders = require('./orders');
@@ -48,20 +50,18 @@ function simulateMonitoring(){
 }
 
 function reviewResults(data) {
-  let finalBalance = orders.checkBudget('eth');
   let finalPrice = parseFloat(data[data.length-1].close);
-  let btcBalance;
-  if (finalBalance === 0) {
-    btcBalance = parseFloat(orders.checkBudget('btc'));
-    finalBalance = btcBalance / finalPrice;
-  } else {
-    btcBalance = parseFloat(orders.checkBudget('eth')) * finalPrice;
+  let balance = orders.checkBudget();
+  if (balance.eth === 0) {
+    balance.eth = parseFloat(orders.checkBudget('btc')) / finalPrice;
+  } else if (balance.btc === 0) {
+    balance.btc = parseFloat(orders.checkBudget('eth')) * finalPrice;
   }
-  console.log(`balance: Ξ${finalBalance} / Ƀ${btcBalance}`);
+  console.log(`balance: Ξ${balance.eth} === Ƀ${balance.btc}`);
 
-  let profit = Math.floor((btcBalance / INITIAL_BALANCE.btc) * 100);
+  let profit = Math.floor(((balance.btc - INITIAL_BALANCE.btc) / INITIAL_BALANCE.btc) * 100);
   let bh = INITIAL_BALANCE.btc / history.getInitialPrice();
-  bh = Math.floor((bh * finalPrice) / INITIAL_BALANCE.btc * 100);
+  bh = Math.floor((((bh * finalPrice) - INITIAL_BALANCE.btc) / INITIAL_BALANCE.btc) * 100);
   console.log(`profit: ${profit}%; b&h: ${bh}%; strategy_over_b&h: ${profit-bh}%`);
 
   let orderHistory = history.getOrderHistory();
@@ -72,12 +72,13 @@ function reviewResults(data) {
         let lastOrder = orderHistory[i-1];
         if ((lastOrder.type === 'buy' && lastOrder.price < order.price) ||
             (lastOrder.type === 'sell' && lastOrder.price > order.price)){
+          order.winning = true;
           winningTrades++;
         }
     }
-    // console.log(_.omit(order, ['pair', 'ordertype', 'expiretm', 'validate']));
+    console.log(_.omit(order, ['type', 'volume', 'pair', 'ordertype', 'expiretm', 'validate']));
   });
-  let winningPercent = Math.round(winningTrades / totalTrades * 100) / 100;
+  let winningPercent = Math.round(winningTrades / (totalTrades-1) * 100); // exclude initial trade
   console.log(`trades: ${totalTrades}; winning: ${winningPercent}%`);
 
   let priceDeltaHistory = history.getPriceDeltaHistory();
