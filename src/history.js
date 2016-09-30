@@ -2,6 +2,7 @@ const _ = require('lodash')
 const when = require('when');
 
 let initialPrice;
+let initialBalance;
 let orderHistory = [];
 let priceDeltaHistory = [];
 
@@ -11,6 +12,14 @@ function recordPriceDelta(price) {
 
 function getPriceDeltaHistory() {
   return priceDeltaHistory;
+}
+
+function recordInitialBalance(price) {
+  initialBalance = price;
+}
+
+function getInitialBalance() {
+  return initialBalance;
 }
 
 function recordInitialPrice(price) {
@@ -36,6 +45,8 @@ function getLastOrder() {
 module.exports = {
   recordOrder,
   getOrderHistory,
+  recordInitialBalance,
+  getInitialBalance,
   recordInitialPrice,
   getInitialPrice,
   recordPriceDelta,

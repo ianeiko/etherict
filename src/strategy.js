@@ -3,19 +3,34 @@ const when = require('when');
 const talib = require('talib');
 const orders = require('./orders');
 const history = require('./history');
-const DATA_BUFFER_SIZE = 9;
-var closeData = [];
+let closeData = [];
+let options = {};
+
+function setStrategy(strategy) {
+  let defaultOptions = {
+    period: [9, 26],
+    stopLoss: 1,
+    enterMargin: 5,
+    exitMargin: 4
+  };
+  options = Object.assign({}, defaultOptions, strategy);
+  console.log('options', options);
+}
+
+function getStrategy() {
+  return options;
+}
 
 async function shouldTrade(data) {
   closeData.push(data.close);
 
-  let startIdx = closeData.length - 1 - DATA_BUFFER_SIZE;
+  let startIdx = closeData.length - 1 - options.period[0];
   startIdx = (startIdx > 0) ? startIdx : 0;
   let baseConfig = {
     startIdx,
     endIdx: closeData.length - 1,
     inReal: closeData,
-    optInTimePeriod: DATA_BUFFER_SIZE
+    optInTimePeriod: options.period[0]
   }
   let talibConf = getTalibConfig(baseConfig, 'sma');
   data.sma1 = await talib_calc(talibConf[0]);
@@ -40,12 +55,12 @@ function smaStrategy(data) {
   let last_order_position = _.get(last_order, 'position');
   let sell_price = data.close - (data.close * .0016);
 
-  let should_enter = (data.sma1 - data.sma2) > (data.sma2 * .05);
-  let should_exit = (data.sma2 - data.sma1) > (data.sma2 * .05);
+  let should_enter = (data.sma1 - data.sma2) > (data.sma2 * options.enterMargin/100);
+  let should_exit = (data.sma2 - data.sma1) > (data.sma2 * options.exitMargin/100);
 
   let stop_loss;
   if (last_order_position === 'enter' &&
-    last_order.price > (sell_price * 1.01)) {
+    last_order.price > (sell_price + (sell_price * (options.stopLoss / 100)))) {
     stop_loss = true;
   }
 
@@ -136,7 +151,7 @@ function getSmaTalibConfig(baseConfig) {
     baseConfig,
     {
       name: 'SMA',
-      optInTimePeriod: DATA_BUFFER_SIZE
+      optInTimePeriod: options.period[0]
     }
   );
   let sma2 = Object.assign(
@@ -144,7 +159,7 @@ function getSmaTalibConfig(baseConfig) {
     baseConfig,
     {
       name: 'SMA',
-      optInTimePeriod: 26,
+      optInTimePeriod: options.period[1],
     }
   );
   result.push(sma1, sma2);
@@ -161,5 +176,7 @@ function talib_calc(parameter){
 }
 
 module.exports = {
-  shouldTrade
+  shouldTrade,
+  setStrategy,
+  getStrategy
 }

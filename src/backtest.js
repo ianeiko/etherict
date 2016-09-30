@@ -1,20 +1,35 @@
+/*
+////////////////////////////////////
+
+npm run backtest -- --strategy=sma --period=9,26 --frequency=288
+
+frequency:
+1 = 5 MINUTES
+12 = 1 HOUR
+144 = 12 HOURS
+288 = DAY
+
+////////////////////////////////////
+*/
+
+const prompt = require('prompt');
 const _ = require('lodash');
 const when = require('when');
 const fs = require('fs');
-const ubique = require('ubique');
-const TRAINING_DATA = './data/BTC_ETH.json';
-const TRADE_FREQUENCY = 288; // DAY
-// const TRADE_FREQUENCY = 144; // 12 HOURS
-// const TRADE_FREQUENCY = 12; // HOUR
-// const TRADE_FREQUENCY = 1; // 5 MINUTES
+const argv = require('minimist')(process.argv.slice(2));
 
+const strategy = require('./strategy');
 const trade = require('./trade');
 const orders = require('./orders');
 const history = require('./history');
-// const INITIAL_BALANCE = {'eth': 100};
+const review = require('./review');
+
+const TRAINING_DATA = './data/BTC_ETH.json';
 const INITIAL_BALANCE = {'btc': 1};
 
-function simulateMonitoring(){
+function simulateMonitoring(options){
+  strategy.setStrategy(options);
+
   fs.readFile(TRAINING_DATA, (err, data) => {
     if(err) throw err;
 
@@ -24,16 +39,17 @@ function simulateMonitoring(){
     }, function(i) {
       return i >= data.length;
     }, function(i) {
-      if (i % TRADE_FREQUENCY === 0){
+      if (i % options.frequency === 0){
         let close = data[i].close;
         let delta;
 
         if (i === 0) {
           history.recordInitialPrice(close);
+          history.recordInitialBalance(INITIAL_BALANCE);
         }
 
         if (i > 0) {
-          let lastMark = data[i - TRADE_FREQUENCY];
+          let lastMark = data[i - options.frequency];
           delta = close - lastMark.close;
           history.recordPriceDelta(delta);
         }
@@ -44,51 +60,40 @@ function simulateMonitoring(){
         });
       }
     }, 0).then(() => {
-      reviewResults(data);
+      review.reviewResults(data);
     }).done();
   });
 }
 
-function reviewResults(data) {
-  let finalPrice = parseFloat(data[data.length-1].close);
-  let balance = orders.checkBudget();
-  if (balance.eth === 0) {
-    balance.eth = parseFloat(orders.checkBudget('btc')) / finalPrice;
-  } else if (balance.btc === 0) {
-    balance.btc = parseFloat(orders.checkBudget('eth')) * finalPrice;
-  }
-  console.log(`balance: Ξ${balance.eth} === Ƀ${balance.btc}`);
-
-  let profit = Math.floor(((balance.btc - INITIAL_BALANCE.btc) / INITIAL_BALANCE.btc) * 100);
-  let bh = INITIAL_BALANCE.btc / history.getInitialPrice();
-  bh = Math.floor((((bh * finalPrice) - INITIAL_BALANCE.btc) / INITIAL_BALANCE.btc) * 100);
-  console.log(`profit: ${profit}%; b&h: ${bh}%; strategy_over_b&h: ${profit-bh}%`);
-
-  let orderHistory = history.getOrderHistory();
-  let totalTrades = orderHistory.length;
-  let winningTrades = 0;
-  _.each(orderHistory, (order, i) => {
-    if (i > 0) {
-        let lastOrder = orderHistory[i-1];
-        if ((lastOrder.type === 'buy' && lastOrder.price < order.price) ||
-            (lastOrder.type === 'sell' && lastOrder.price > order.price)){
-          order.winning = true;
-          winningTrades++;
-        }
-    }
-    console.log(_.omit(order, ['type', 'volume', 'pair', 'ordertype', 'expiretm', 'validate']));
-  });
-  let winningPercent = Math.round(winningTrades / (totalTrades-1) * 100); // exclude initial trade
-  console.log(`trades: ${totalTrades}; winning: ${winningPercent}%`);
-
-  let priceDeltaHistory = history.getPriceDeltaHistory();
-  let MD = ubique.drawdown(priceDeltaHistory);
-  console.log(MD.maxdd);
+function init(strategy) {
+  strategy = _.pick(strategy, 'strategy', 'period', 'frequency');
+  strategy.period = _.split(strategy.period, ',').map(n => parseInt(n));
+  orders.updateBudget(INITIAL_BALANCE);
+  simulateMonitoring(strategy);
 }
 
-orders.updateBudget(INITIAL_BALANCE);
-simulateMonitoring();
+if (argv.strategy
+  && argv.period
+  && argv.frequency) {
+  init(argv);
+} else {
+  prompt.start();
+  prompt.get([{
+    name: 'strategy',
+    default: 'sma'
+  }, {
+    name: 'period',
+    default: '9,26'
+  }, {
+    name: 'frequency',
+    default: 288
+  }], function (err, result) {
+    console.log('Command-line input received:', result);
+    init(result);
+  });
+
+}
 
 module.exports = {
-  simulateMonitoring
+  init
 };
