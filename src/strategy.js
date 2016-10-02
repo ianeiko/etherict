@@ -14,6 +14,7 @@ function setStrategy(strategy) {
     exitMargin: 4
   };
   options = Object.assign({}, defaultOptions, strategy);
+  closeData = [];
   console.log('options', options);
 }
 

@@ -28,6 +28,7 @@ const TRAINING_DATA = './data/BTC_ETH.json';
 const INITIAL_BALANCE = {'btc': 1};
 
 function simulateMonitoring(options){
+  history.clearHistory();
   strategy.setStrategy(options);
 
   fs.readFile(TRAINING_DATA, (err, data) => {
@@ -60,16 +61,53 @@ function simulateMonitoring(options){
         });
       }
     }, 0).then(() => {
-      review.reviewResults(data);
+      return when.resolve(review.reviewResults(data));
     }).done();
   });
 }
 
+function allArrays(left, right) {
+  let result = [];
+  for (var i = 0; i < left.length; i++) {
+    for (var j = 0; j < right.length; j++) {
+      result.push([left[i], right[j]])
+    }
+  }
+  return result;
+}
+
 function init(strategy) {
-  strategy = _.pick(strategy, 'strategy', 'period', 'frequency');
-  strategy.period = _.split(strategy.period, ',').map(n => parseInt(n));
   orders.updateBudget(INITIAL_BALANCE);
-  simulateMonitoring(strategy);
+  strategy = _.pick(strategy, 'strategy', 'period', 'frequency');
+  let strategies = _
+    .chain(strategy.period)
+    .split(',')
+    .map(n => {
+      let result = [];
+      if (n.indexOf('...')) {
+        let arr = _.split(n, '...');
+        return _.range(parseInt(arr[0]), parseInt(arr[1]));
+      } else {
+        result = parseInt(n);
+      }
+      return result;
+    })
+    .thru(current => {
+      return allArrays(current[0], current[1]);
+    })
+    .map(arr => {
+      return _.extend(
+        {},
+        strategy,
+        { period: arr }
+      );
+    })
+    .value();
+  console.log('strategies', strategies);
+
+  when.iterate(x => x+1,
+    x => x >= strategies.length,
+    x => simulateMonitoring(strategies[x]), 0).done();
 }
 
 if (argv.strategy
@@ -83,7 +121,7 @@ if (argv.strategy
     default: 'sma'
   }, {
     name: 'period',
-    default: '9,26'
+    default: '5...8,15...18'
   }, {
     name: 'frequency',
     default: 288

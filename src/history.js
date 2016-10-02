@@ -42,7 +42,15 @@ function getLastOrder() {
   return _.last(orderHistory);
 }
 
+function clearHistory() {
+  initialPrice = null;
+  initialBalance = null;
+  orderHistory = [];
+  priceDeltaHistory = [];
+}
+
 module.exports = {
+  clearHistory,
   recordOrder,
   getOrderHistory,
   recordInitialBalance,

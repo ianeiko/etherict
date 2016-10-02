@@ -49,6 +49,7 @@ function reviewResults(data) {
   // console.log(MD.maxdd);
 
   let options = strategy.getStrategy();
+  console.log('getStrategy', options);
   let time = moment().format('l::HH:MM');
   let jsonData = {
     time,
