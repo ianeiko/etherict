@@ -35,35 +35,35 @@ function simulateMonitoring(options){
     if(err) throw err;
 
     data = JSON.parse(data);
-    when.iterate(function(i) {
-      return i+1;
-    }, function(i) {
-      return i >= data.length;
-    }, function(i) {
-      if (i % options.frequency === 0){
-        let close = data[i].close;
-        let delta;
-
-        if (i === 0) {
-          history.recordInitialPrice(close);
-          history.recordInitialBalance(INITIAL_BALANCE);
-        }
-
-        if (i > 0) {
-          let lastMark = data[i - options.frequency];
-          delta = close - lastMark.close;
-          history.recordPriceDelta(delta);
-        }
-
-        return trade.onData({
-          close,
-          delta
-        });
-      }
-    }, 0).then(() => {
-      return when.resolve(review.reviewResults(data));
-    }).done();
+    when.iterate(x => x+1,
+      x => x >= data.length,
+      x => simulate(options, data, x), 0).done(() => {
+        return when.resolve(review.reviewResults(data));
+      });
   });
+}
+
+function simulate(options, data, i) {
+  if (i % options.frequency === 0){
+    let close = data[i].close;
+    let delta;
+
+    if (i === 0) {
+      history.recordInitialPrice(close);
+      history.recordInitialBalance(INITIAL_BALANCE);
+    }
+
+    if (i > 0) {
+      let lastMark = data[i - options.frequency];
+      delta = close - lastMark.close;
+      history.recordPriceDelta(delta);
+    }
+
+    return trade.onData({
+      close,
+      delta
+    });
+  }
 }
 
 function allArrays(left, right) {
@@ -78,31 +78,7 @@ function allArrays(left, right) {
 
 function init(strategy) {
   orders.updateBudget(INITIAL_BALANCE);
-  strategy = _.pick(strategy, 'strategy', 'period', 'frequency');
-  let strategies = _
-    .chain(strategy.period)
-    .split(',')
-    .map(n => {
-      let result = [];
-      if (n.indexOf('...')) {
-        let arr = _.split(n, '...');
-        return _.range(parseInt(arr[0]), parseInt(arr[1]));
-      } else {
-        result = parseInt(n);
-      }
-      return result;
-    })
-    .thru(current => {
-      return allArrays(current[0], current[1]);
-    })
-    .map(arr => {
-      return _.extend(
-        {},
-        strategy,
-        { period: arr }
-      );
-    })
-    .value();
+  let strategies = getStrategies(strategy);
   console.log('strategies', strategies);
 
   when.iterate(x => x+1,
@@ -130,6 +106,34 @@ if (argv.strategy
     init(result);
   });
 
+}
+
+function getStrategies(strategy) {
+  strategy = _.pick(strategy, 'strategy', 'period', 'frequency');
+  return _
+    .chain(strategy.period)
+    .split(',')
+    .map(n => {
+      let result = [];
+      if (n.indexOf('...')) {
+        let arr = _.split(n, '...');
+        return _.range(parseInt(arr[0]), parseInt(arr[1]));
+      } else {
+        result = parseInt(n);
+      }
+      return result;
+    })
+    .thru(current => {
+      return allArrays(current[0], current[1]);
+    })
+    .map(arr => {
+      return _.extend(
+        {},
+        strategy,
+        { period: arr }
+      );
+    })
+    .value();
 }
 
 module.exports = {
