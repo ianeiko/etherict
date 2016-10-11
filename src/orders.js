@@ -224,15 +224,15 @@ var exports = {
   updateBudget,
   placeOrder,
   createSellAllBtcOrder,
-  createSellAllEthOrder
+  createSellAllEthOrder,
+  reset
 }
 
 if(process.env.NODE_ENV === 'test') {
   exports = Object.assign({}, exports, {
     placeOrderAPI,
     checkOpenOrders,
-    checkOrderById,
-    reset
+    checkOrderById
   });
 }
 

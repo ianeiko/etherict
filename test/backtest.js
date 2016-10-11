@@ -7,13 +7,12 @@ describe('Backtest', () => {
     orders.reset();
   });
 
-  describe('simulateMonitoring', () => {
+  describe('init', () => {
 
     it('backtest does not throw an error', () => {
-      backtest.simulateMonitoring();
+      backtest.init();
     });
 
   });
 
 });
-

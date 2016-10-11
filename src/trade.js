@@ -1,14 +1,12 @@
 const _ = require('lodash');
 const when = require('when');
 const orders = require('./orders');
-const strategy = require('./strategy');
-const history = require('./history');
 
-async function onData(data){
+async function onData(strategy, data, history){
   try {
     await orders.checkOrders();
     let action = await strategy.shouldTrade(data);
-    let order = await planTrade(data, action);
+    let order = await planTrade(data, action, history);
 
     if (!order) return false;
     return orders.placeOrder(order);
@@ -17,7 +15,7 @@ async function onData(data){
   }
 }
 
-function planTrade(data, action){
+function planTrade(data, action, history){
   let order;
   if (action === 'exit') {
     order = orders.createSellAllEthOrder(data);

@@ -12,38 +12,42 @@ frequency:
 ////////////////////////////////////
 */
 
-const prompt = require('prompt');
 const _ = require('lodash');
 const when = require('when');
 const fs = require('fs');
-const argv = require('minimist')(process.argv.slice(2));
 
-const strategy = require('./strategy');
 const trade = require('./trade');
 const orders = require('./orders');
-const history = require('./history');
+const HistoryClass = require('./history');
+const StrategyClass = require('./strategy');
 const review = require('./review');
 
 const TRAINING_DATA = './data/BTC_ETH.json';
-const INITIAL_BALANCE = {'btc': 1};
+const INITIAL_BALANCE = {btc: 1, eth: 0};
 
 function simulateMonitoring(options){
-  history.clearHistory();
-  strategy.setStrategy(options);
+  return when.promise((resolve, reject) => {
+    let history = new HistoryClass();
+    let strategy = new StrategyClass(options, history);
 
-  fs.readFile(TRAINING_DATA, (err, data) => {
-    if(err) throw err;
+    orders.reset();
+    orders.updateBudget(INITIAL_BALANCE);
 
-    data = JSON.parse(data);
-    when.iterate(x => x+1,
-      x => x >= data.length,
-      x => simulate(options, data, x), 0).done(() => {
-        return when.resolve(review.reviewResults(data));
-      });
+    fs.readFile(TRAINING_DATA, (err, data) => {
+      if(err) throw err;
+
+      data = JSON.parse(data);
+      return when.iterate(x => x+1,
+        x => x >= data.length,
+        x => simulate(strategy, options, history, data, x), 0)
+        .done(() => {
+          return resolve(review.reviewResults(data, history, options));
+        });
+    });
   });
 }
 
-function simulate(options, data, i) {
+function simulate(strategy, options, history, data, i) {
   if (i % options.frequency === 0){
     let close = data[i].close;
     let delta;
@@ -59,10 +63,11 @@ function simulate(options, data, i) {
       history.recordPriceDelta(delta);
     }
 
-    return trade.onData({
-      close,
-      delta
-    });
+    return trade.onData(
+      strategy,
+      { close, delta },
+      history
+    );
   }
 }
 
@@ -77,35 +82,13 @@ function allArrays(left, right) {
 }
 
 function init(strategy) {
-  orders.updateBudget(INITIAL_BALANCE);
   let strategies = getStrategies(strategy);
-  console.log('strategies', strategies);
 
   when.iterate(x => x+1,
     x => x >= strategies.length,
-    x => simulateMonitoring(strategies[x]), 0).done();
-}
-
-if (argv.strategy
-  && argv.period
-  && argv.frequency) {
-  init(argv);
-} else {
-  prompt.start();
-  prompt.get([{
-    name: 'strategy',
-    default: 'sma'
-  }, {
-    name: 'period',
-    default: '5...8,15...18'
-  }, {
-    name: 'frequency',
-    default: 288
-  }], function (err, result) {
-    console.log('Command-line input received:', result);
-    init(result);
-  });
-
+    x => {
+      return simulateMonitoring(strategies[x]);
+    }, 0).done();
 }
 
 function getStrategies(strategy) {

@@ -22,3 +22,28 @@ https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1
 - scope orders using userref
 - add expiration to automatically expire orders
 - clear canceled, partially filled, and expired orders
+
+
+
+# REFACTOR:
+
+backtest:
+  => strategies
+    .map => strategy
+
+      => get signals?
+        - all data
+        - data options
+
+        - simulate
+          - data chunk
+          - strategy instance
+          - history instance
+          - state/budget
+        => signal
+
+      => review signals
+        - review
+          - signals
+          - review options
+        => csv output

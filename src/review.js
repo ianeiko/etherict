@@ -4,12 +4,11 @@ const fs = require('fs');
 const ubique = require('ubique');
 const json2csv = require('json2csv');
 const csv = require('fast-csv');
-const history = require('./history');
 const orders = require('./orders');
 const strategy = require('./strategy');
 const RESULTS_FILE = './data/results.csv';
 
-function reviewResults(data) {
+function reviewResults(data, history, options) {
   let finalPrice = parseFloat(data[data.length-1].close);
   let balance = orders.checkBudget();
   let initialBalance = history.getInitialBalance();
@@ -48,8 +47,6 @@ function reviewResults(data) {
   let MD = ubique.drawdown(priceDeltaHistory);
   // console.log(MD.maxdd);
 
-  let options = strategy.getStrategy();
-  console.log('getStrategy', options);
   let time = moment().format('l::HH:MM');
   let jsonData = {
     time,

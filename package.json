@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "babel src -d dist",
-    "test": "SIMULATE_ORDER=true NODE_ENV=test mocha --compilers js:babel-register",
-    "backtest": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js",
+    "test": "SIMULATE_ORDER=true NODE_ENV=test mocha --compilers js:babel-core/register --require babel-polyfill",
+    "flow": "flow check",
+    "backtest": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtester.js",
     "trade": "SIMULATE_ORDER=true supervisor dist/livetrade.js",
     "import": "babel-node src/import.js"
   },
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "babel-cli": "^6.14.0",
+    "babel-plugin-transform-flow-strip-types": "^6.14.0",
     "babel-preset-es2015": "^6.14.0",
     "babel-preset-latest": "^6.14.0",
     "mocha": "^2.5.3",
