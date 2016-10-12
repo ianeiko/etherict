@@ -4,3 +4,4 @@ data/
 kraken-config.js
 log.txt
 .ipynb_checkpoints/
+.scrap/

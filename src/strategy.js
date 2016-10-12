@@ -26,13 +26,13 @@ class Strategy {
       inReal: this.closeData,
       optInTimePeriod: this.options.period[0]
     }
-    let talibConf = this.getTalibConfig(baseConfig, 'sma');
+    let talibConf = this.getTalibConfig(baseConfig, this.options.system);
     data.sma1 = await talib_calc(talibConf[0]);
     data.sma2 = await talib_calc(talibConf[1]);
     if (!data.sma1 || !data.sma2) return;
 
     return when.promise((resolve, reject) => {
-      let action = this.actionForStrategy('sma', data);
+      let action = this.actionForStrategy(this.options.system, data);
       return resolve(action);
     })
   }
@@ -124,6 +124,7 @@ class Strategy {
   getTalibConfig(baseConfig, strategy) {
     let result;
     switch (strategy) {
+      case 'simple_sma':
       case 'sma':
         result = this.getSmaTalibConfig(baseConfig);
         break;

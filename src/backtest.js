@@ -87,36 +87,51 @@ function init(strategy) {
   when.iterate(x => x+1,
     x => x >= strategies.length,
     x => {
+      console.log('simulating:', strategies[x]);
       return simulateMonitoring(strategies[x]);
     }, 0).done();
 }
 
 function getStrategies(strategy) {
-  strategy = _.pick(strategy, 'strategy', 'period', 'frequency');
-  return _
+  strategy = _.pick(strategy, 'system', 'period', 'frequency');
+  let result = [];
+  let periods = _
     .chain(strategy.period)
     .split(',')
     .map(n => {
       let result = [];
-      if (n.indexOf('...')) {
+      if (n.indexOf('...') > -1) {
         let arr = _.split(n, '...');
-        return _.range(parseInt(arr[0]), parseInt(arr[1]));
+        let range = _.range(parseInt(arr[0]), parseInt(arr[1]) + 1);
+        return range;
       } else {
         result = parseInt(n);
       }
       return result;
     })
     .thru(current => {
-      return allArrays(current[0], current[1]);
-    })
-    .map(arr => {
-      return _.extend(
-        {},
-        strategy,
-        { period: arr }
-      );
+      if (_.isArray(current[0]) && _.isArray(current[1])) {
+        return allArrays(current[0], current[1]);
+      } else {
+        return [current];
+      }
     })
     .value();
+
+  if(!_.isArray(strategy.system)) {
+    strategy.system = strategy.system.split(',').map(w => w.trim());
+  }
+
+  strategy.system.map(system => {
+    periods.map(period => {
+      result.push(_.extend(
+        {},
+        strategy,
+        { period, system }
+      ))
+    })
+  });
+  return result;
 }
 
 module.exports = {

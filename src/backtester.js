@@ -2,18 +2,18 @@ const prompt = require('prompt');
 const argv = require('minimist')(process.argv.slice(2));
 const backtest = require('./backtest');
 
-if (argv.strategy
+if (argv.system
   && argv.period
   && argv.frequency) {
   backtest.init(argv);
 } else {
   prompt.start();
   prompt.get([{
-    name: 'strategy',
-    default: 'sma'
+    name: 'system',
+    default: 'sma,simple_sma'
   }, {
     name: 'period',
-    default: '3...23,8...28'
+    default: '5...5,12...13'
   }, {
     name: 'frequency',
     default: 288

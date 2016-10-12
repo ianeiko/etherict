@@ -50,7 +50,7 @@ function reviewResults(data, history, options) {
   let time = moment().format('l::HH:MM');
   let jsonData = {
     time,
-    strategy: options.strategy,
+    system: options.system,
     period: options.period.toString(),
     balance_1: `Ξ${balance.eth}`,
     balance_2: `Ƀ${balance.btc}`,
@@ -60,7 +60,7 @@ function reviewResults(data, history, options) {
     trades: totalTrades,
     winning: `${winningPercent}%`
   }
-  let jsonFields = ['time', 'strategy', 'period', 'balance_1', 'balance_2', 'profit', 'bh', 'strategy_over_bh', 'trades', 'winning'];
+  let jsonFields = ['time', 'system', 'period', 'balance_1', 'balance_2', 'profit', 'bh', 'strategy_over_bh', 'trades', 'winning'];
 
   fs.stat(RESULTS_FILE, (err) => {
     if (err) {
