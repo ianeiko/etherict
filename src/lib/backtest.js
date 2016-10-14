@@ -14,7 +14,7 @@ const INITIAL_BALANCE = { btc: 1, eth: 0 };
 function readBacktestData(options) {
   return when.promise((resolve, reject) => {
     fs.readFile(TRAINING_DATA, (err, data) => {
-      if(err) throw err;
+      if(err) reject(err);
       data = JSON.parse(data);
 
       let history = new HistoryClass({

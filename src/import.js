@@ -33,7 +33,7 @@ function fetch_data() {
   request(api_url, (err, response, body) => {
     if(err) throw err;
 
-    var parsedBody = JSON.parse(body);
+    let parsedBody = JSON.parse(body);
     if(parsedBody.length <= 0) return;
 
     fs.writeFile(`${DATA_DEST}.json`, body, (err) => {
@@ -43,7 +43,7 @@ function fetch_data() {
     });
 
     if(EXPORT_CSV) {
-      var fields = ['date', 'high', 'low', 'open', 'close', 'volume', 'quoteVolume', 'weightedAverage'];
+      let fields = ['date', 'high', 'low', 'open', 'close', 'volume', 'quoteVolume', 'weightedAverage'];
       json2csv({ data: parsedBody, fields: fields }, function(err, csv) {
         if (err) console.log(err);
 

@@ -2,8 +2,8 @@ const _ = require('lodash');
 
 function allArrays(left, right) {
   let result = [];
-  for (var i = 0; i < left.length; i++) {
-    for (var j = 0; j < right.length; j++) {
+  for (let i = 0; i < left.length; i++) {
+    for (let j = 0; j < right.length; j++) {
       result.push([left[i], right[j]]);
     }
   }
