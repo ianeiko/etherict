@@ -26,6 +26,7 @@ function planTrade(data, action, history){
     order = orders.createSellAllBtcOrder(data);
   }
   if (order) {
+    history.recordPriceDelta(data.delta);
     history.recordOrder(order);
     return order;
   }

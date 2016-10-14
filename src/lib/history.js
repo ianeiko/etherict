@@ -2,11 +2,11 @@ const _ = require('lodash')
 const when = require('when');
 
 class History {
-  constructor() {
-    this.initialPrice;
-    this.initialBalance;
-    this.orderHistory = [];
-    this.priceDeltaHistory = [];
+  constructor(options) {
+    this.initialPrice = _.get(options, 'initialPrice');
+    this.initialBalance = _.get(options, 'initialBalance');
+    this.orderHistory = _.get(options, 'orderHistory') || [];
+    this.priceDeltaHistory = _.get(options, 'priceDeltaHistory') || [];
   }
 
   recordPriceDelta(price) {

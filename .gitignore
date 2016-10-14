@@ -1,7 +1,7 @@
 dist/
 node_modules/
 data/
-kraken-config.js
+config/kraken-config.js
 log.txt
 .ipynb_checkpoints/
 .scrap/

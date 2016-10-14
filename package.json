@@ -7,7 +7,7 @@
     "build": "babel src -d dist",
     "test": "SIMULATE_ORDER=true NODE_ENV=test mocha --compilers js:babel-core/register --require babel-polyfill",
     "flow": "flow check",
-    "backtest": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtester.js",
+    "backtest": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js --system=sma --period=9,26 --frequency=288",
     "trade": "SIMULATE_ORDER=true supervisor dist/livetrade.js",
     "import": "babel-node src/import.js"
   },

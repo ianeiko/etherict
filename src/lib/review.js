@@ -5,7 +5,6 @@ const ubique = require('ubique');
 const json2csv = require('json2csv');
 const csv = require('fast-csv');
 const orders = require('./orders');
-const strategy = require('./strategy');
 const RESULTS_FILE = './data/results.csv';
 
 function reviewResults(data, history, options) {

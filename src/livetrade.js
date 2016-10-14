@@ -5,8 +5,8 @@ const KrakenConfig = require('./kraken-config.js').config;
 const kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
 const poll = require('when/poll');
 
-const trade = require('./trade');
-const orders = require('./orders');
+const trade = require('./lib/trade');
+const orders = require('./lib/orders');
 const INITIAL_BALANCE = 100;
 
 function monitorPrice(){

@@ -2,7 +2,7 @@ const _ = require('lodash');
 const when = require('when');
 const fs = require('fs');
 const KrakenClient = require('kraken-api');
-const KrakenConfig = require('./kraken-config.js').config;
+const KrakenConfig = require('../config/kraken-config.js').config;
 const kraken = new KrakenClient(KrakenConfig.api_key, KrakenConfig.api_secret);
 const request = require('request');
 
