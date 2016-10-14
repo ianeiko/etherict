@@ -3,7 +3,7 @@ const when = require('when');
 const fs = require('fs');
 
 const trade = require('./trade');
-const orders = require('./orders');
+const OrdersClass = require('./orders');
 const HistoryClass = require('./history');
 const StrategyClass = require('./strategy');
 const review = require('./review');
@@ -22,29 +22,30 @@ function readBacktestData(options) {
         initialPrice: data[0].close
       });
       let strategy = new StrategyClass(options, history);
-      let reviewResults = () => resolve(review.reviewResults(data, history, options));
-
-      orders.reset();
-      orders.updateBudget(INITIAL_BALANCE);
+      let orders = new OrdersClass({
+        initialBalance: INITIAL_BALANCE
+      });
+      let reviewResults = () => resolve(review.reviewResults(data, history, orders, options));
 
       return when.iterate(x => x + 1,
         x => x >= data.length,
-        x => simulate(strategy, options, history, data, x), 0)
+        x => simulate(x, data, history, orders, strategy, options), 0)
         .done(reviewResults);
     });
   });
 }
 
-function simulate(strategy, options, history, data, i) {
+function simulate(i, data, history, orders, strategy, options) {
   if (i % options.frequency === 0 && i > 0) {
     let close = data[i].close;
     let lastMark = data[i - options.frequency];
     let delta = (close - lastMark.close) / lastMark.close;
 
     return trade.onData(
-      strategy,
       { close, delta },
-      history
+      history,
+      orders,
+      strategy
     );
   }
 }

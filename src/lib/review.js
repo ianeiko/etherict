@@ -3,10 +3,9 @@ const moment = require('moment');
 const fs = require('fs');
 const ubique = require('ubique');
 const json2csv = require('json2csv');
-const orders = require('./orders');
 const RESULTS_FILE = './data/results.csv';
 
-function reviewResults(data, history, options) {
+function reviewResults(data, history, orders, options) {
   let finalPrice = parseFloat(data[data.length - 1].close);
   let balance = orders.checkBudget();
   let initialBalance = history.getInitialBalance();

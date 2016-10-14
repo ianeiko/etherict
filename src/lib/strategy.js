@@ -1,7 +1,6 @@
 const _ = require('lodash')
 const when = require('when');
 const talib = require('talib');
-const orders = require('./orders');
 
 class Strategy {
   constructor(strategy, history) {

@@ -1,10 +1,12 @@
 const expect = require('chai').expect;
-const orders = require('../src/orders');
+const OrdersClass = require.main.require('src/lib/orders');
 const nock = require('nock');
 
 const orderMock = require('./mocks/order.json')
 const balanceMock = require('./mocks/balance.json')
 const placeOrderMock = require('./mocks/place_order.json')
+
+let orders;
 
 function setupServer(options){
   const defaultOptions = {
@@ -24,11 +26,10 @@ function setupServer(options){
 
 describe('Orders', () => {
   beforeEach(() => {
-    orders.reset();
+    orders = new OrdersClass();
   });
   afterEach(() => {
     nock.cleanAll();
-    orders.reset();
   });
 
   describe('checkBudget', () => {
@@ -127,4 +128,3 @@ describe('Orders', () => {
   });
 
 });
-

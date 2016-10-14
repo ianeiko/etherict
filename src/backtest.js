@@ -34,7 +34,7 @@ if (argv.system
   && argv.period
   && argv.frequency) {
   init(argv);
-} else {
+} else if (process.env.NODE_ENV !== 'test') {
   prompt.start();
   prompt.get([{
     name: 'system',
@@ -51,3 +51,7 @@ if (argv.system
     init(result);
   });
 }
+
+module.exports = {
+  init
+};
