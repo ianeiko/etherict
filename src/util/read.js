@@ -4,7 +4,7 @@ function allArrays(left, right) {
   let result = [];
   for (var i = 0; i < left.length; i++) {
     for (var j = 0; j < right.length; j++) {
-      result.push([left[i], right[j]])
+      result.push([left[i], right[j]]);
     }
   }
   return result;
@@ -46,12 +46,12 @@ function getStrategies(strategy) {
         {},
         strategy,
         { period, system }
-      ))
-    })
+      ));
+    });
   });
   return result;
 }
 
 module.exports = {
   getStrategies
-}
+};

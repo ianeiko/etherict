@@ -22,7 +22,7 @@ const backtest = require('./lib/backtest');
 function init(strategy) {
   let strategies = readUtils.getStrategies(strategy);
 
-  when.iterate(x => x+1,
+  when.iterate(x => x + 1,
     x => x >= strategies.length,
     x => {
       console.log('simulating:', strategies[x]);
@@ -46,7 +46,7 @@ if (argv.system
   }, {
     name: 'frequency',
     default: 288
-  }], function (err, result) {
+  }], function(err, result) {
     console.log('Command-line input received:', result);
     init(result);
   });

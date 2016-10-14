@@ -9,14 +9,14 @@ const trade = require('./lib/trade');
 const orders = require('./lib/orders');
 const INITIAL_BALANCE = 100;
 
-function monitorPrice(){
+function monitorPrice() {
   return when.promise((resolve, reject, notify) => {
-    kraken.api('Ticker', {'pair': 'ETHXBT'}, function(error, data) {
+    kraken.api('Ticker', { 'pair': 'ETHXBT' }, function(error, data) {
       if(error) console.error(`ERROR: ${error}`);
       try {
         const close = _.get(data, 'result.XETHXXBT.c[0]');
         if(!close) return;
-        console.log(`[${new Date()}]: ${close}`)
+        console.log(`[${new Date()}]: ${close}`);
         trade.onData({
           close: close
         });
@@ -28,7 +28,7 @@ function monitorPrice(){
   });
 }
 
-orders.updateBudget({'eth': INITIAL_BALANCE});
+orders.updateBudget({ 'eth': INITIAL_BALANCE });
 poll(monitorPrice, 30 * 1000);
 
 module.exports = {

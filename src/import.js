@@ -69,7 +69,7 @@ if(start_period || end_period) {
   const START_DAYS = days_period || 7;
   start_date = start_date - (HOURS_24 * START_DAYS);
   end_date = '9999999999';
-  console.log('fetching OHLC data')
+  console.log('fetching OHLC data');
 }
 
 fetch_data();

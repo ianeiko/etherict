@@ -1,4 +1,4 @@
-const _ = require('lodash')
+const _ = require('lodash');
 const when = require('when');
 
 class History {

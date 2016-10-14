@@ -9,9 +9,9 @@ const StrategyClass = require('./strategy');
 const review = require('./review');
 
 const TRAINING_DATA = './data/BTC_ETH.json';
-const INITIAL_BALANCE = {btc: 1, eth: 0};
+const INITIAL_BALANCE = { btc: 1, eth: 0 };
 
-function readBacktestData(options){
+function readBacktestData(options) {
   return when.promise((resolve, reject) => {
     fs.readFile(TRAINING_DATA, (err, data) => {
       if(err) throw err;
@@ -27,7 +27,7 @@ function readBacktestData(options){
       orders.reset();
       orders.updateBudget(INITIAL_BALANCE);
 
-      return when.iterate(x => x+1,
+      return when.iterate(x => x + 1,
         x => x >= data.length,
         x => simulate(strategy, options, history, data, x), 0)
         .done(reviewResults);
@@ -36,7 +36,7 @@ function readBacktestData(options){
 }
 
 function simulate(strategy, options, history, data, i) {
-  if (i % options.frequency === 0 && i > 0){
+  if (i % options.frequency === 0 && i > 0) {
     let close = data[i].close;
     let lastMark = data[i - options.frequency];
     let delta = (close - lastMark.close) / lastMark.close;
