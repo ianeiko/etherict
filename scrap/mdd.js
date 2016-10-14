@@ -1,11 +1,12 @@
 const ubique = require('ubique');
 
-// let x = [100, 150, 90, 120, 80, 200];
-let x  = [50, -60, 30, -40, 120];
+let x = [500, 750, 400, 600, 350, 800];
+let delta = x.map((num, key) => {
+  if (key === 0) return 0;
+  let last = x[key-1];
+  return (num - last) / last;
+})
 
-let result = ubique.drawdown(x);
-let start = result.maxddrecov[0];
-let end = result.maxddrecov[1];
+let result = ubique.drawdown(delta);
+console.log(delta);
 console.log(result);
-console.log(x[start-1]);
-console.log(x[end-1]);

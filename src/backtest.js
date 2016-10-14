@@ -59,7 +59,7 @@ function simulate(strategy, options, history, data, i) {
 
     if (i > 0) {
       let lastMark = data[i - options.frequency];
-      delta = close - lastMark.close;
+      delta = (close - lastMark.close) / lastMark.close;
       history.recordPriceDelta(delta);
     }
 

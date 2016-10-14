@@ -43,9 +43,8 @@ function reviewResults(data, history, options) {
   console.log(`trades: ${totalTrades}; winning: ${winningPercent}%`);
 
   let priceDeltaHistory = history.getPriceDeltaHistory();
-  // console.log('priceDeltaHistory', priceDeltaHistory);
-  let MD = ubique.drawdown(priceDeltaHistory);
-  // console.log(MD.maxdd);
+  let mdd = ubique.drawdown(priceDeltaHistory);
+  mdd = Math.round(mdd.maxdd * 10000) / 100;
 
   let time = moment().format('l::HH:MM');
   let jsonData = {
@@ -54,13 +53,26 @@ function reviewResults(data, history, options) {
     period: options.period.toString(),
     balance_1: `Ξ${balance.eth}`,
     balance_2: `Ƀ${balance.btc}`,
+    mdd: `${mdd}%`,
     profit: `${profit}%`,
     bh: `${bh}%`,
     strategy_over_bh: `${strategy_over_bh}%`,
     trades: totalTrades,
     winning: `${winningPercent}%`
   }
-  let jsonFields = ['time', 'system', 'period', 'balance_1', 'balance_2', 'profit', 'bh', 'strategy_over_bh', 'trades', 'winning'];
+  let jsonFields = [
+    'time',
+    'system',
+    'period',
+    'balance_1',
+    'balance_2',
+    'mdd',
+    'profit',
+    'bh',
+    'strategy_over_bh',
+    'trades',
+    'winning'
+  ];
 
   fs.stat(RESULTS_FILE, (err) => {
     if (err) {
