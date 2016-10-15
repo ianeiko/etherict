@@ -1,8 +1,12 @@
 /*
 ////////////////////////////////////
 
+single file:
 npm run import -- --from=3/1/16 --to=10/1/16
 npm run import -- --days=7
+
+files by month:
+npm run import -- --from_month=3 --to_month=10
 
 ////////////////////////////////////
 */
@@ -12,6 +16,7 @@ const request = require('request');
 const fs = require('fs');
 const args = require('yargs');
 const json2csv = require('json2csv');
+const moment = require('moment');
 
 const MINUTES_5 = 5 * 60;
 const HOURS_24 = 24 * 60 * 60;
@@ -31,11 +36,11 @@ function init() {
     period: MINUTES_5,
     start_date: Math.round(new Date() / 1000) - HOURS_24, // 24 hours ago
   };
-  options = Object.assign({}, defaultOptions, options);
-  let url = buildUrl(options);
-  let dest = buildDest(options);
-  console.log('calling fetch data with: ', options);
-  fetch_data(url, dest);
+  _.each(options, set => {
+    set = Object.assign({}, defaultOptions, set);
+    console.log('calling fetch data with: ', set);
+    fetch_data(buildUrl(set), buildDest(set));
+  });
 }
 
 function fetch_data(url, dest) {
@@ -73,7 +78,11 @@ function exportCsv(parsedBody, dest) {
 }
 
 function buildDest(options) {
-  return `${DATA_DIR}/${options.currency_pair}`;
+  let result = `${DATA_DIR}/${options.currency_pair}`;
+  if (options.period_name) {
+    result = `${result}_${options.period_name}`;
+  }
+  return result;
 }
 
 function buildUrl(options) {
@@ -94,26 +103,59 @@ function buildUrl(options) {
 }
 
 function parseArguments() {
+  let result = [];
   let start_date;
   let end_date;
   const start_arg = _.get(args, 'argv.from');
   const end_arg = _.get(args, 'argv.to');
-  const days_period = _.get(args, 'argv.days');
+  const days_arg = _.get(args, 'argv.days');
+  const from_month_arg = _.get(args, 'argv.from_month');
+  const to_month_arg = _.get(args, 'argv.to_month');
   if(start_arg && end_arg) {
     start_date = dateToTime(start_arg);
     end_date = dateToTime(end_arg);
+  } else if (from_month_arg && to_month_arg) {
+    start_date = [];
+    end_date = [];
+    for (let i = from_month_arg; i < to_month_arg; i++) {
+      let result = monthToTime(i);
+      start_date.push(result[0]);
+      end_date.push(result[1]);
+    }
   } else {
-    const START_DAYS = days_period || 7;
+    const START_DAYS = days_arg || 7;
     if (start_arg) {
       start_date = start_arg - (HOURS_24 * START_DAYS);
     }
     end_date = '9999999999';
   }
+
+  if (_.isArray(start_date)
+    && _.isArray(end_date)
+    && start_date.length === end_date.length) {
+    for (let i = 0; i < start_date.length; i++) {
+      let period_name = from_month_arg + i;
+      result.push(buildDateOptions(start_date[i], end_date[i], period_name));
+    }
+  } else {
+    result.push(buildDateOptions(start_date, end_date));
+  }
+  return result;
+}
+
+function buildDateOptions(start_date, end_date, period_name) {
   let result = {
     start_date,
-    end_date
+    end_date,
+    period_name
   };
   return _.omitBy(result, _.isNil);
+}
+
+function monthToTime(month) {
+  let start = moment().month(month - 1).format('X');
+  let end = moment().month(month).format('X');
+  return [start, end];
 }
 
 function dateToTime(date) {
