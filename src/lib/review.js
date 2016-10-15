@@ -46,6 +46,7 @@ function reviewResults(data, history, orders, options) {
   let time = moment().format('l::HH:MM');
   let jsonData = {
     time,
+    month: options.month,
     system: options.system,
     period: options.period.toString(),
     balance_1: `Ξ${balance.eth}`,
@@ -59,6 +60,7 @@ function reviewResults(data, history, orders, options) {
   };
   let jsonFields = [
     'time',
+    'month',
     'system',
     'period',
     'balance_1',

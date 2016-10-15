@@ -8,12 +8,14 @@ const HistoryClass = require('./history');
 const StrategyClass = require('./strategy');
 const review = require('./review');
 
-const TRAINING_DATA = './data/BTC_ETH.json';
+const TRAINING_DATA = './data/BTC_ETH';
 const INITIAL_BALANCE = { btc: 1, eth: 0 };
 
 function readBacktestData(options) {
   return when.promise((resolve, reject) => {
-    fs.readFile(TRAINING_DATA, (err, data) => {
+    let fileName = getFileName(options);
+    console.log('reading file: ', fileName);
+    fs.readFile(fileName, (err, data) => {
       if(err) reject(err);
       data = JSON.parse(data);
 
@@ -48,6 +50,14 @@ function simulate(i, data, history, orders, strategy, options) {
       strategy
     );
   }
+}
+
+function getFileName(options) {
+  let result = TRAINING_DATA;
+  if (options.month) {
+    result = `${result}_${options.month}`;
+  }
+  return `${result}.json`;
 }
 
 module.exports = {

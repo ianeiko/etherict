@@ -11,16 +11,16 @@ function allArrays(left, right) {
 }
 
 function getStrategies(strategy) {
-  strategy = _.pick(strategy, 'system', 'period', 'frequency');
+  strategy = _.pick(strategy, 'system', 'period', 'frequency', 'months');
   let result = [];
-  let periods = _
+  const periods = _
     .chain(strategy.period)
     .split(',')
     .map(n => {
       let result = [];
       if (n.indexOf('...') > -1) {
-        let arr = _.split(n, '...');
-        let range = _.range(parseInt(arr[0]), parseInt(arr[1]) + 1);
+        const arr = _.split(n, '...');
+        const range = _.range(parseInt(arr[0]), parseInt(arr[1]) + 1);
         return range;
       } else {
         result = parseInt(n);
@@ -36,17 +36,31 @@ function getStrategies(strategy) {
     })
     .value();
 
-  if(!_.isArray(strategy.system)) {
+  if (strategy.system.indexOf(',') === -1) {
+    strategy.system = [strategy.system];
+  } else if(!_.isArray(strategy.system)) {
     strategy.system = strategy.system.split(',').map(w => w.trim());
   }
 
-  strategy.system.map(system => {
-    periods.map(period => {
-      result.push(_.extend(
-        {},
-        strategy,
-        { period, system }
-      ));
+  if (_.isNumber(strategy.months)) {
+    strategy.months = [strategy.months];
+  } else if(!_.isArray(strategy.months) && strategy.months.indexOf(',') > -1) {
+    strategy.months = strategy.months.split(',').map(w => w.trim());
+  }
+
+  strategy.months.map(month => {
+    strategy.system.map(system => {
+      periods.map(period => {
+        result.push(_.extend(
+          {},
+          strategy,
+          {
+            period,
+            system,
+            month
+          }
+        ));
+      });
     });
   });
   return result;
