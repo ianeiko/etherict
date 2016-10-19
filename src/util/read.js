@@ -1,18 +1,7 @@
 const _ = require('lodash');
 
-function allArrays(left, right) {
-  let result = [];
-  for (let i = 0; i < left.length; i++) {
-    for (let j = 0; j < right.length; j++) {
-      result.push([left[i], right[j]]);
-    }
-  }
-  return result;
-}
-
 function getStrategies(strategy) {
-  strategy = _.pick(strategy, 'system', 'period', 'frequency', 'months');
-  let result = [];
+  strategy = _.pick(strategy, 'system', 'period', 'frequency', 'month');
   const periods = _
     .chain(strategy.period)
     .split(',')
@@ -42,28 +31,65 @@ function getStrategies(strategy) {
     strategy.system = strategy.system.split(',').map(w => w.trim());
   }
 
-  if (_.isNumber(strategy.months)) {
-    strategy.months = [strategy.months];
-  } else if(!_.isArray(strategy.months) && strategy.months.indexOf(',') > -1) {
-    strategy.months = strategy.months.split(',').map(w => w.trim());
+  if (_.get(strategy, 'month') && _.isNumber(strategy.month)) {
+    strategy.month = [strategy.month];
+  } else if(_.get(strategy, 'month')
+    && !_.isArray(strategy.month)
+    && strategy.month.toString().indexOf(',') > -1) {
+    strategy.month = strategy.month.split(',').map(w => w.trim());
   }
 
-  strategy.months.map(month => {
-    strategy.system.map(system => {
-      periods.map(period => {
-        result.push(_.extend(
-          {},
-          strategy,
-          {
-            period,
-            system,
-            month
-          }
-        ));
-      });
-    });
-  });
+  strategy.period = periods;
+  const strategyPart = _.pick(strategy, ['month', 'system', 'period']);
+  const strategyRest = _.omit(strategy, ['month', 'system', 'period']);
+  const pairs = getPairs(strategyPart);
+  const combos = getCombinations(pairs);
+  const result = mergeStrategy(combos, strategyRest);
   return result;
+}
+
+function allArrays(left, right) {
+  const result = [];
+  for (let i = 0; i < left.length; i++) {
+    for (let j = 0; j < right.length; j++) {
+      result.push([left[i], right[j]]);
+    }
+  }
+  return result;
+}
+
+function getCombinations(args) {
+  return _.reduce(args, (a, b) => {
+    return _.flatten(_.map(a, (x) => {
+      return _.map(b, (y) => {
+        return _.concat(x, [y]);
+      });
+    }), true);
+  }, [[]]);
+}
+
+function getPairs(input) {
+  const keys = _.keys(input);
+  const pairs = _.reduce(keys, (acc, key) => {
+    const values = input[key];
+    const result = _.map(values, (val, idx) => {
+      return { [key]: values[idx] };
+    });
+    return _.concat(acc, [result]);
+  }, []);
+  return pairs;
+}
+
+function mergeStrategy(combos, strategy) {
+  return _.map(combos, (combo) => {
+    const result = _.reduce(combo, (acc, item) => {
+      const keys = _.keys(item);
+      const values = _.values(item);
+      const result = { [keys[0]]: values[0] };
+      return _.merge(acc, result);
+    }, {});
+    return _.assign({}, strategy, result);
+  });
 }
 
 module.exports = {

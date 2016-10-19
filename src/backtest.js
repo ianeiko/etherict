@@ -1,7 +1,7 @@
 /*
 ////////////////////////////////////
 
-npm run backtest -- --system=sma --period=9,26 --frequency=288 --months=3,4,5
+npm run backtest -- --system=sma --period=9,26 --frequency=288 --month=3,4,5
 
 frequency:
 1 = 5 MINUTES
@@ -32,8 +32,7 @@ function init(strategy) {
 
 if (argv.system
   && argv.period
-  && argv.frequency
-  && argv.months) {
+  && argv.frequency) {
   init(argv);
 } else if (process.env.NODE_ENV !== 'test') {
   prompt.start();
@@ -48,7 +47,7 @@ if (argv.system
     name: 'frequency',
     default: 288
   }, {
-    name: 'months',
+    name: 'month',
     default: '3,4,5,6,7,8,9,10'
   }], (err, result) => {
     console.log('Command-line input received:', result);

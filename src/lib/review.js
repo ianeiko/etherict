@@ -6,9 +6,9 @@ const json2csv = require('json2csv');
 const RESULTS_FILE = './data/results.csv';
 
 function reviewResults(data, history, orders, options) {
-  let finalPrice = parseFloat(data[data.length - 1].close);
-  let balance = orders.checkBudget();
-  let initialBalance = history.getInitialBalance();
+  const finalPrice = parseFloat(data[data.length - 1].close);
+  const balance = orders.checkBudget();
+  const initialBalance = history.getInitialBalance();
   if (balance.eth === 0) {
     balance.eth = parseFloat(orders.checkBudget('btc')) / finalPrice;
   } else if (balance.btc === 0) {
@@ -16,18 +16,18 @@ function reviewResults(data, history, orders, options) {
   }
   console.log(`balance: Ξ${balance.eth} === Ƀ${balance.btc}`);
 
-  let profit = Math.floor(((balance.btc - initialBalance.btc) / initialBalance.btc) * 100);
+  const profit = Math.floor(((balance.btc - initialBalance.btc) / initialBalance.btc) * 100);
   let bh = initialBalance.btc / history.getInitialPrice();
   bh = Math.floor((((bh * finalPrice) - initialBalance.btc) / initialBalance.btc) * 100);
-  let strategy_over_bh = profit - bh;
+  const strategy_over_bh = profit - bh;
   console.log(`profit: ${profit}%; b&h: ${bh}%; strategy_over_b&h: ${strategy_over_bh}%`);
 
-  let orderHistory = history.getOrderHistory();
-  let totalTrades = orderHistory.length;
+  const orderHistory = history.getOrderHistory();
+  const totalTrades = orderHistory.length;
   let winningTrades = 0;
   _.each(orderHistory, (order, i) => {
     if (i > 0) {
-        let lastOrder = orderHistory[i - 1];
+        const lastOrder = orderHistory[i - 1];
         if ((lastOrder.type === 'buy' && lastOrder.price < order.price) ||
             (lastOrder.type === 'sell' && lastOrder.price > order.price)) {
           order.winning = true;
@@ -36,15 +36,15 @@ function reviewResults(data, history, orders, options) {
     }
     console.log(_.omit(order, ['type', 'volume', 'pair', 'ordertype', 'expiretm', 'validate']));
   });
-  let winningPercent = Math.round(winningTrades / (totalTrades - 1) * 100); // exclude initial trade
+  const winningPercent = Math.round(winningTrades / (totalTrades - 1) * 100); // exclude initial trade
   console.log(`trades: ${totalTrades}; winning: ${winningPercent}%`);
 
-  let priceDeltaHistory = history.getPriceDeltaHistory();
+  const priceDeltaHistory = history.getPriceDeltaHistory();
   let mdd = ubique.drawdown(priceDeltaHistory);
   mdd = Math.round(mdd.maxdd * 10000) / 100;
 
-  let time = moment().format('l::HH:MM');
-  let jsonData = {
+  const time = moment().format('l::HH:MM');
+  const jsonData = {
     time,
     month: options.month,
     system: options.system,
@@ -58,7 +58,7 @@ function reviewResults(data, history, orders, options) {
     trades: totalTrades,
     winning: `${winningPercent}%`
   };
-  let jsonFields = [
+  const jsonFields = [
     'time',
     'month',
     'system',

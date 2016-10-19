@@ -30,7 +30,7 @@ init();
 // ==
 
 function init() {
-  let options = parseArguments();
+  const options = parseArguments();
   const defaultOptions = {
     currency_pair: 'BTC_ETH', // https://poloniex.com/public?command=returnCurrencies
     period: MINUTES_5,
@@ -46,7 +46,7 @@ function init() {
 function fetch_data(url, dest) {
   request(url, (err, response, body) => {
     if(err) throw err;
-    let parsedBody = JSON.parse(body);
+    const parsedBody = JSON.parse(body);
     if(parsedBody.length <= 0) return;
     writeData(body, parsedBody, dest);
   });
@@ -65,8 +65,8 @@ function writeData(rawBody, parsedBody, dest) {
 }
 
 function exportCsv(parsedBody, dest) {
-  let fields = ['date', 'high', 'low', 'open', 'close', 'volume', 'quoteVolume', 'weightedAverage'];
-  json2csv({ data: parsedBody, fields: fields }, function(err, csv) {
+  const fields = ['date', 'high', 'low', 'open', 'close', 'volume', 'quoteVolume', 'weightedAverage'];
+  json2csv({ data: parsedBody, fields: fields }, (err, csv) => {
     if (err) console.log(err);
 
     fs.writeFile(`${dest}.csv`, csv, (err) => {
@@ -103,7 +103,7 @@ function buildUrl(options) {
 }
 
 function parseArguments() {
-  let result = [];
+  const result = [];
   let start_date;
   let end_date;
   const start_arg = _.get(args, 'argv.from');
@@ -118,7 +118,7 @@ function parseArguments() {
     start_date = [];
     end_date = [];
     for (let i = from_month_arg; i < to_month_arg; i++) {
-      let result = monthToTime(i);
+      const result = monthToTime(i);
       start_date.push(result[0]);
       end_date.push(result[1]);
     }
@@ -134,7 +134,7 @@ function parseArguments() {
     && _.isArray(end_date)
     && start_date.length === end_date.length) {
     for (let i = 0; i < start_date.length; i++) {
-      let period_name = from_month_arg + i;
+      const period_name = from_month_arg + i;
       result.push(buildDateOptions(start_date[i], end_date[i], period_name));
     }
   } else {
@@ -144,7 +144,7 @@ function parseArguments() {
 }
 
 function buildDateOptions(start_date, end_date, period_name) {
-  let result = {
+  const result = {
     start_date,
     end_date,
     period_name
@@ -153,8 +153,8 @@ function buildDateOptions(start_date, end_date, period_name) {
 }
 
 function monthToTime(month) {
-  let start = moment().month(month - 1).format('X');
-  let end = moment().month(month).format('X');
+  const start = moment().month(month - 1).format('X');
+  const end = moment().month(month).format('X');
   return [start, end];
 }
 

@@ -13,21 +13,21 @@ const INITIAL_BALANCE = { btc: 1, eth: 0 };
 
 function readBacktestData(options) {
   return when.promise((resolve, reject) => {
-    let fileName = getFileName(options);
+    const fileName = getFileName(options);
     console.log('reading file: ', fileName);
     fs.readFile(fileName, (err, data) => {
       if(err) reject(err);
       data = JSON.parse(data);
 
-      let history = new HistoryClass({
+      const history = new HistoryClass({
         initialBalance: INITIAL_BALANCE,
         initialPrice: data[0].close
       });
-      let strategy = new StrategyClass(options, history);
-      let orders = new OrdersClass({
+      const strategy = new StrategyClass(options, history);
+      const orders = new OrdersClass({
         initialBalance: INITIAL_BALANCE
       });
-      let reviewResults = () => resolve(review.reviewResults(data, history, orders, options));
+      const reviewResults = () => resolve(review.reviewResults(data, history, orders, options));
 
       return when.iterate(x => x + 1,
         x => x >= data.length,
@@ -39,9 +39,9 @@ function readBacktestData(options) {
 
 function simulate(i, data, history, orders, strategy, options) {
   if (i % options.frequency === 0 && i > 0) {
-    let close = data[i].close;
-    let lastMark = data[i - options.frequency];
-    let delta = (close - lastMark.close) / lastMark.close;
+    const close = data[i].close;
+    const lastMark = data[i - options.frequency];
+    const delta = (close - lastMark.close) / lastMark.close;
 
     return trade.onData(
       { close, delta },

@@ -12,7 +12,7 @@ const INITIAL_BALANCE = 100;
 
 function monitorPrice() {
   return when.promise((resolve, reject, notify) => {
-    kraken.api('Ticker', { 'pair': 'ETHXBT' }, function(error, data) {
+    kraken.api('Ticker', { 'pair': 'ETHXBT' }, (error, data) => {
       if(error) console.error(`ERROR: ${error}`);
       try {
         const close = _.get(data, 'result.XETHXXBT.c[0]');
