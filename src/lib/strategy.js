@@ -6,7 +6,7 @@ class Strategy {
   constructor(strategy, history) {
     let defaultOptions = {
       period: [9, 26],
-      stopLoss: 1,
+      stoploss: 1,
       enterMargin: 5,
       exitMargin: 4
     };
@@ -53,7 +53,7 @@ class Strategy {
 
     let stop_loss;
     if (last_order_position === 'enter' &&
-      last_order.price > (sell_price + (sell_price * (this.options.stopLoss / 100)))) {
+      last_order.price > (sell_price + (sell_price * (this.options.stoploss / 100)))) {
       stop_loss = true;
     }
     return this.getAction({

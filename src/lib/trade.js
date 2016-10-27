@@ -24,8 +24,10 @@ function planTrade(action, data, history, orders){
   } else if(action === 'enter') {
     order = orders.createSellAllBtcOrder(data);
   }
-  if (order) {
+  if (history.inPosition()) {
     history.recordPriceDelta(data.delta);
+  }
+  if (order) {
     history.recordOrder(order);
     return order;
   }

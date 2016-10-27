@@ -1,7 +1,7 @@
 const _ = require('lodash');
 
 function getStrategies(strategy) {
-  strategy = _.pick(strategy, 'system', 'period', 'frequency', 'month');
+  strategy = _.pick(strategy, 'system', 'period', 'frequency', 'month', 'stoploss');
   const periods = _
     .chain(strategy.period)
     .split(',')
@@ -25,10 +25,16 @@ function getStrategies(strategy) {
     })
     .value();
 
-  if (strategy.system.indexOf(',') === -1) {
+  if (_.get(strategy, 'system') && strategy.system.indexOf(',') === -1) {
     strategy.system = [strategy.system];
-  } else if(!_.isArray(strategy.system)) {
+  } else if(_.get(strategy, 'system') && !_.isArray(strategy.system)) {
     strategy.system = strategy.system.split(',').map(w => w.trim());
+  }
+
+  if (_.get(strategy, 'stoploss') && strategy.stoploss.indexOf(',') === -1) {
+    strategy.stoploss = [strategy.stoploss];
+  } else if(_.get(strategy, 'stoploss') && !_.isArray(strategy.stoploss)) {
+    strategy.stoploss = strategy.stoploss.split(',').map(w => w.trim());
   }
 
   if (_.get(strategy, 'month') && _.isNumber(strategy.month)) {
@@ -40,8 +46,9 @@ function getStrategies(strategy) {
   }
 
   strategy.period = periods;
-  const strategyPart = _.pick(strategy, ['month', 'system', 'period']);
-  const strategyRest = _.omit(strategy, ['month', 'system', 'period']);
+  const comboFields = ['month', 'system', 'period', 'stoploss'];
+  const strategyPart = _.pick(strategy, comboFields);
+  const strategyRest = _.omit(strategy, comboFields);
   const pairs = getPairs(strategyPart);
   const combos = getCombinations(pairs);
   const result = mergeStrategy(combos, strategyRest);

@@ -47,6 +47,7 @@ function reviewResults(data, history, orders, options) {
   const jsonData = {
     time,
     month: options.month,
+    stoploss: options.stoploss,
     system: options.system,
     period: options.period.toString(),
     balance_1: `Ξ${balance.eth}`,
@@ -61,6 +62,7 @@ function reviewResults(data, history, orders, options) {
   const jsonFields = [
     'time',
     'month',
+    'stoploss',
     'system',
     'period',
     'balance_1',

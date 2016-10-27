@@ -41,6 +41,11 @@ class History {
     return this.orderHistory;
   }
 
+  inPosition() {
+    const last = _.last(this.getOrderHistory());
+    return _.get(last, 'position') === 'enter';
+  }
+
   getLastOrder() {
     return _.last(this.orderHistory);
   }

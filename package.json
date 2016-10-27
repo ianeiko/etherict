@@ -8,7 +8,8 @@
     "test": "SIMULATE_ORDER=true NODE_ENV=test mocha --compilers js:babel-core/register --require babel-polyfill",
     "flow": "flow check",
     "lint": "eslint src --ext js",
-    "backtest": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js --system=sma,simple_sma --period='5,12' --frequency=288 --month=3,4,5,6,7,8,9",
+    "backtest": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js",
+    "sample": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js --system=sma,simple_sma --period='5,12' --stoploss='1,2' --frequency=288",
     "trade": "SIMULATE_ORDER=true supervisor dist/livetrade.js",
     "import": "babel-node src/import.js"
   },
