@@ -4,5 +4,6 @@ data/
 config/kraken-config.js
 log.txt
 .ipynb_checkpoints/
+.idea/
 scrap/*
 npm-debug.log

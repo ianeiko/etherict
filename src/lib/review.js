@@ -82,6 +82,8 @@ function reviewResults(data, history, orders, options) {
       fs.appendFile(RESULTS_FILE, '\n' + json2csv({ data: jsonData, hasCSVColumnTitle: false }));
     }
   });
+
+  return jsonData;
 }
 
 module.exports = {

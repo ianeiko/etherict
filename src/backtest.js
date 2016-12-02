@@ -22,12 +22,15 @@ const backtest = require('./lib/backtest');
 function init(strategy) {
   const strategies = readUtils.getStrategies(strategy);
 
-  when.iterate(x => x + 1,
-    x => x >= strategies.length,
-    x => {
-      console.log('simulating:', strategies[x]);
-      return backtest.readBacktestData(strategies[x]);
-    }, 0).done();
+  return when.promise(resolve => {
+    return when.iterate(x => x + 1,
+      x => x >= strategies.length,
+      x => {
+        console.log('simulating:', strategies[x]);
+        const result = backtest.readBacktestData(strategies[x]);
+        return resolve(result);
+      }, 0).done();
+  });
 }
 
 if (argv.system

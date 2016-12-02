@@ -6,7 +6,7 @@ const StrategyClass = require.main.require('src/lib/strategy');
 
 const SAMPLE_STRATEGY = {
   system: 'sma',
-  period: '9,26',
+  period: [9,26],
   frequency: 288
 }
 const INITIAL_BALANCE = { btc: 1, eth: 0 }

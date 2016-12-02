@@ -6,10 +6,14 @@
   "scripts": {
     "build": "babel src -d dist",
     "test": "SIMULATE_ORDER=true NODE_ENV=test mocha --compilers js:babel-core/register --require babel-polyfill",
+    "test_one": "SIMULATE_ORDER=true NODE_ENV=test mocha --compilers js:babel-core/register --require babel-polyfill --grep",
     "flow": "flow check",
     "lint": "eslint src --ext js",
     "backtest": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js",
-    "sample": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js --system=sma,simple_sma --period='5,12' --stoploss='1,2' --frequency=288",
+    "sample": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js --system=sma --month=7 --period='1440,3456' --frequency=1",
+    "sample_daily": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js --system=sma --month=7 --period='5,12' --frequency=288",
+    "macd": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js --system=macd --period='26,12,9' --frequency=288",
+    "simple": "SIMULATE_ORDER=true BACKTESTING=true babel-node src/backtest.js --system=simple_sma --period='5,12' --frequency=288",
     "trade": "SIMULATE_ORDER=true supervisor dist/livetrade.js",
     "import": "babel-node src/import.js"
   },

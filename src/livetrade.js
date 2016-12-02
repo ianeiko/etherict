@@ -11,7 +11,7 @@ const orders = new OrdersClass();
 const INITIAL_BALANCE = 100;
 
 function monitorPrice() {
-  return when.promise((resolve, reject, notify) => {
+  return when.promise((resolve, reject) => {
     kraken.api('Ticker', { 'pair': 'ETHXBT' }, (error, data) => {
       if(error) console.error(`ERROR: ${error}`);
       try {
