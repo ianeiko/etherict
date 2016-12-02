@@ -75,6 +75,7 @@ function reviewResults(data, history, orders, options) {
     'winning'
   ];
 
+  if (process.env.NODE_ENV === 'test') return jsonData;
   fs.stat(RESULTS_FILE, (err) => {
     if (err) {
       fs.writeFile(RESULTS_FILE, json2csv({ data: jsonData, fields: jsonFields }));
@@ -82,8 +83,6 @@ function reviewResults(data, history, orders, options) {
       fs.appendFile(RESULTS_FILE, '\n' + json2csv({ data: jsonData, hasCSVColumnTitle: false }));
     }
   });
-
-  return jsonData;
 }
 
 module.exports = {
