@@ -7,6 +7,7 @@ class History {
     this.initialBalance = _.get(options, 'initialBalance');
     this.orderHistory = _.get(options, 'orderHistory') || [];
     this.priceDeltaHistory = _.get(options, 'priceDeltaHistory') || [];
+    this.closeData = _.get(options, 'closeData') || [];
   }
 
   recordPriceDelta(price) {
@@ -48,6 +49,14 @@ class History {
 
   getLastOrder() {
     return _.last(this.orderHistory);
+  }
+
+  recordCloseData(data) {
+    this.closeData.push(data);
+  }
+
+  getCloseData() {
+    return this.closeData;
   }
 }
 

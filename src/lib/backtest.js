@@ -5,7 +5,6 @@ const fs = require('fs');
 const trade = require('./trade');
 const OrdersClass = require('./orders');
 const HistoryClass = require('./history');
-const StrategyClass = require('./strategy');
 const review = require('./review');
 
 const TRAINING_DATA = './data/BTC_ETH';
@@ -23,7 +22,6 @@ function readBacktestData(options) {
         initialBalance: INITIAL_BALANCE,
         initialPrice: data[0].close
       });
-      const strategy = new StrategyClass(options, history);
       const orders = new OrdersClass({
         initialBalance: INITIAL_BALANCE
       });
@@ -31,13 +29,13 @@ function readBacktestData(options) {
 
       return when.iterate(x => x + 1,
         x => x >= data.length,
-        x => simulate(x, data, history, orders, strategy, options), 0)
+        x => simulate(x, data, history, orders, options), 0)
         .done(reviewResults);
     });
   });
 }
 
-function simulate(i, data, history, orders, strategy, options) {
+function simulate(i, data, history, orders, options) {
   if (i % options.frequency === 0 && i > 0) {
     const close = data[i].close;
     const lastMark = data[i - options.frequency];
@@ -47,7 +45,7 @@ function simulate(i, data, history, orders, strategy, options) {
       { close, delta },
       history,
       orders,
-      strategy
+      options
     );
   }
 }

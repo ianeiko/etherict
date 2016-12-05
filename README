@@ -1,49 +1,15 @@
-# Setup
-docker run -d -p 8888:8888 -v "$(pwd):/home/jovyan/work" -e GRANT_SUDO=yes jupyter/scipy-notebook
-docker run -it -p 8888:8888 -v "$(pwd):/home/work" oj/zipline /bin/bash
+# import
 
-## DATA SOURCE
+as one file:
+```npm run import -- --from=3/1/16 --to=10/1/16```
 
-https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1405699200&end=9999999999&period=86400
+split by month
+```npm run import -- --from_month=3 --to_month=10```
 
-## examples
- - https://github.com/panditanvita/BTCpredictor
- - https://github.com/stavros0/bitcoin-price-prediction
- - https://github.com/westrik/bitcoin
+# backtest
 
-# sample txid: O4TOX7-YMLBP-IOH2S6
+single data input
+```npm run backtest -- --system=sma --period=9,26 --frequency=288```
 
-
-
-
-# TODO
-
-## later
-- scope orders using userref
-- add expiration to automatically expire orders
-- clear canceled, partially filled, and expired orders
-
-
-
-# REFACTOR:
-
-backtest:
-  => strategies
-    .map => strategy
-
-      => get signals?
-        - all data
-        - data options
-
-        - simulate
-          - data chunk
-          - strategy instance
-          - history instance
-          - state/budget
-        => signal
-
-      => review signals
-        - review
-          - signals
-          - review options
-        => csv output
+specific months
+```npm run backtest -- --system=sma --period=9,26 --frequency=288 --month=3,4,5```

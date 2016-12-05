@@ -3,7 +3,7 @@ const expect = require('chai').expect;
 const backtest = require.main.require('src/backtest');
 
 const SAMPLE_STRATEGY = {
-  system: 'sma',
+  system: 'sma,simple_sma,price_sma,macd',
   period: '9,26',
   frequency: 288
 }

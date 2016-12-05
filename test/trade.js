@@ -23,7 +23,7 @@ describe('Trade', () => {
       let orders = new OrdersClass({
         initialBalance: INITIAL_BALANCE
       });
-      let strategy = new StrategyClass(SAMPLE_STRATEGY, history);
+      let strategy = new StrategyClass(SAMPLE_STRATEGY);
       let close = 0;
       let delta = 0;
       trade.onData(
