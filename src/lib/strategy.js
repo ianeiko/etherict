@@ -10,9 +10,9 @@ const defaultStrategy = {
 
 function shouldTrade(data, strategy) {
   const options = _.defaults(strategy, defaultStrategy)
-  const talibConf = getTalibConfig(data, options)
+  const config = getConfig(data, options)
 
-  return actionForStrategy(data, options, talibConf)
+  return actionForStrategy(data, options, config)
 }
 
 function simpleSmaStrategy(data, options) {
@@ -98,56 +98,29 @@ function macdStrategy(data, options) {
   })
 }
 
-function actionForStrategy(data, options, talibConf) {
-  const smaTransform = data => {
-    return talibConf => {
-      return talib_calc(talibConf[0])
-        .then(sma1 => {
-          _.set(data, 'sma1', _.last(sma1.result.outReal))
-          return data
-        })
-        .then(() => {
-          return talib_calc(talibConf[1])
-        })
-        .then(sma2 => {
-          _.set(data, 'sma2', _.last(sma2.result.outReal))
-          return data
-        })
-    }
-  }
-
-  const macdTransform = data => {
-    return talibConf => {
-      return talib_calc(talibConf)
-        .then(macd => {
-          _.set(data, 'macd.line', _.last(macd.result.outMACD))
-          _.set(data, 'macd.signal', _.last(macd.result.outMACDSignal))
-          return data
-        })
-    }
-  }
+function actionForStrategy(data, options, config) {
 
   switch (options.system) {
     case 'simple_sma':
-      return smaTransform(data)(talibConf)
+      return config.transform(data)(config.talib)
         .then(data => {
           return simpleSmaStrategy(data, options)
         })
       break
     case 'sma':
-      return smaTransform(data)(talibConf)
+      return config.transform(data)(config.talib)
         .then(data => {
           return smaStrategy(data, options)
         })
       break
     case 'price_sma':
-      return smaTransform(data)(talibConf)
+      return config.transform(data)(config.talib)
         .then(data => {
           return priceSmaStrategy(data, options)
         })
       break
     case 'macd':
-      return macdTransform(data)(talibConf)
+      return config.transform(data)(config.talib)
         .then(data => {
           return macdStrategy(data, options)
         })
@@ -167,7 +140,7 @@ function getAction(params) {
   return action
 }
 
-function getTalibConfig(data, options) {
+function getConfig(data, options) {
   let startIdx = data.close_data.length - 1 - options.period[0]
   startIdx = (startIdx > 0) ? startIdx : 0
   const baseConfig = {
@@ -176,22 +149,58 @@ function getTalibConfig(data, options) {
     inReal: data.close_data
   }
 
-  let result
+  const smaTransform = data => {
+    return config => {
+      return talib_calc(config[0])
+        .then(sma1 => {
+          _.set(data, 'sma1', _.last(sma1.result.outReal))
+          return data
+        })
+        .then(() => {
+          return talib_calc(config[1])
+        })
+        .then(sma2 => {
+          _.set(data, 'sma2', _.last(sma2.result.outReal))
+          return data
+        })
+    }
+  }
+
+  const macdTransform = data => {
+    return config => {
+      return talib_calc(config)
+        .then(macd => {
+          _.set(data, 'macd.line', _.last(macd.result.outMACD))
+          _.set(data, 'macd.signal', _.last(macd.result.outMACDSignal))
+          return data
+        })
+    }
+  }
+
+  let talib
+  let transform
   switch (options.system) {
     case 'simple_sma':
     case 'sma':
-      result = getSmaTalibConfig(baseConfig, options)
+      transform = smaTransform
+      talib = getSmaTalibConfig(baseConfig, options)
       break
     case 'price_sma':
-      result = getSmaTalibConfig(baseConfig, options)
-      result[0].optInTimePeriod = 7
-      result[1].optInTimePeriod = 21
+      transform = smaTransform
+      talib = getSmaTalibConfig(baseConfig, options)
+      talib[0].optInTimePeriod = 7
+      talib[1].optInTimePeriod = 21
       break
     case 'macd':
-      result = getMacdTalibConfig(baseConfig, options)
+      transform = macdTransform
+      talib = getMacdTalibConfig(baseConfig, options)
       break
   }
-  return result
+
+  return {
+    talib,
+    transform
+  }
 }
 
 function getMacdTalibConfig(baseConfig) {
