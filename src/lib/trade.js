@@ -9,12 +9,14 @@ async function onData(data, history, orders, options){
     history.recordCloseData(data.close);
     _.set(data, 'close_data', history.getCloseData());
     _.set(data, 'last_order', history.getLastOrder());
-    const action = await strategy.shouldTrade(data, options);
-
-    const order = await planTrade(action, data, history, orders);
-
-    if (!order) return false;
-    return orders.placeOrder(order);
+    return strategy.shouldTrade(data, options)
+      .then(action => {
+        return planTrade(action, data, history, orders);
+      })
+      .then(order => {
+        if (!order) return false;
+        orders.placeOrder(order)
+      })
   } catch(err) {
     console.error(err);
   }

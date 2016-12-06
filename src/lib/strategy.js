@@ -11,11 +11,8 @@ const defaultStrategy = {
 function shouldTrade(data, strategy) {
   const options = _.defaults(strategy, defaultStrategy)
   const talibConf = getTalibConfig(data, options)
-  const action = actionForStrategy(data, options, talibConf)
 
-  return when.promise((resolve, reject) => {
-    return resolve(action)
-  })
+  return actionForStrategy(data, options, talibConf)
 }
 
 function simpleSmaStrategy(data, options) {
@@ -102,22 +99,20 @@ function macdStrategy(data, options) {
 }
 
 function actionForStrategy(data, options, talibConf) {
-  let action
-
   const smaTransform = data => {
     return talibConf => {
-      const sma1_promise = talib_calc(talibConf[0])
+      return talib_calc(talibConf[0])
         .then(sma1 => {
-          _.set(data, 'sma1', sma1.result.outReal)
+          _.set(data, 'sma1', _.last(sma1.result.outReal))
           return data
         })
-      const sma2_promise = talib_calc(talibConf[1])
+        .then(() => {
+          return talib_calc(talibConf[1])
+        })
         .then(sma2 => {
-          _.set(data, 'sma2', sma2.result.outReal)
+          _.set(data, 'sma2', _.last(sma2.result.outReal))
           return data
         })
-
-      return when.all([sma1_promise, sma2_promise])
     }
   }
 
@@ -125,10 +120,8 @@ function actionForStrategy(data, options, talibConf) {
     return talibConf => {
       return talib_calc(talibConf)
         .then(macd => {
-          data.macd = {
-            line: _.last(macd.result.outMACD),
-            signal: _.last(macd.result.outMACDSignal)
-          }
+          _.set(data, 'macd.line', _.last(macd.result.outMACD))
+          _.set(data, 'macd.signal', _.last(macd.result.outMACDSignal))
           return data
         })
     }
