@@ -1,41 +1,19 @@
 const _ = require('lodash')
 const when = require('when');
 const talib = require('talib');
+const defaultStrategy = {
+  period: [9, 26],
+  stoploss: 1,
+  enterMargin: 5,
+  exitMargin: 4
+};
 
-async function shouldTrade(data, options) {
-  let defaultOptions = {
-    period: [9, 26],
-    stoploss: 1,
-    enterMargin: 5,
-    exitMargin: 4
-  };
-  options = Object.assign({}, defaultOptions, options);
-
-  let startIdx = data.close_data.length - 1 - options.period[0];
-  startIdx = (startIdx > 0) ? startIdx : 0;
-  let baseConfig = {
-    startIdx,
-    endIdx: data.close_data.length - 1,
-    inReal: data.close_data,
-    // optInTimePeriod: options.period[0]
-  }
-  const talibConf = getTalibConfig(baseConfig, options);
-  if (options.system === 'macd') {
-    data.macd = await talib_calc(talibConf);
-    data.macd = {
-      line: _.last(data.macd.result.outMACD),
-      signal: _.last(data.macd.result.outMACDSignal)
-    }
-  } else {
-    data.sma1 = await talib_calc(talibConf[0]);
-    data.sma1 = _.last(data.sma1.result.outReal);
-    data.sma2 = await talib_calc(talibConf[1]);
-    data.sma2 = _.last(data.sma2.result.outReal);
-    if (!data.sma1 || !data.sma2) return;
-  }
+function shouldTrade(data, strategy) {
+  const options = _.defaults(strategy, defaultStrategy);
+  const talibConf = getTalibConfig(data, options);
+  const action = actionForStrategy(data, options, talibConf);
 
   return when.promise((resolve, reject) => {
-    let action = actionForStrategy(options, data);
     return resolve(action);
   })
 }
@@ -44,33 +22,6 @@ function simpleSmaStrategy(data, options) {
   return getAction({
     should_enter: data.sma1 > data.sma2,
     should_exit: data.sma1 < data.sma2
-  });
-}
-
-function macdStrategy(data, options) {
-  const last_order_position = _.get(data, 'last_order.position');
-  const last_order_price =  _.get(data, 'last_order.price');
-
-  const sell_price = data.close - (data.close * .0016);
-  const should_enter = data.macd.signal < 0;
-  const should_exit = data.macd.signal > 0;
-
-  if (should_exit) {
-    console.log('should_exit', data.macd);
-  }
-  if (should_enter) {
-    console.log('should_exit', data.macd);
-  }
-
-  // let stop_loss;
-  // if (last_order_position === 'enter' &&
-  //   last_order_price > (sell_price + (sell_price * (options.stoploss / 100)))) {
-  //   stop_loss = true;
-  // }
-  return getAction({
-    should_enter,
-    should_exit,
-    // stop_loss
   });
 }
 
@@ -123,23 +74,92 @@ function priceSmaStrategy(data, options) {
   });
 }
 
-function actionForStrategy(options, data) {
+function macdStrategy(data, options) {
+  const last_order_position = _.get(data, 'last_order.position');
+  const last_order_price =  _.get(data, 'last_order.price');
+
+  const sell_price = data.close - (data.close * .0016);
+  const should_enter = data.macd.signal < 0;
+  const should_exit = data.macd.signal > 0;
+
+  if (should_exit) {
+    console.log('should_exit', data.macd);
+  }
+  if (should_enter) {
+    console.log('should_exit', data.macd);
+  }
+
+  // let stop_loss;
+  // if (last_order_position === 'enter' &&
+  //   last_order_price > (sell_price + (sell_price * (options.stoploss / 100)))) {
+  //   stop_loss = true;
+  // }
+  return getAction({
+    should_enter,
+    should_exit,
+    // stop_loss
+  });
+}
+
+function actionForStrategy(data, options, talibConf) {
   let action;
+
+  const smaTransform = data => {
+    return talibConf => {
+      const sma1_promise = talib_calc(talibConf[0])
+        .then(sma1 => {
+          _.set(data, 'sma1', sma1.result.outReal)
+          return data;
+        });
+      const sma2_promise = talib_calc(talibConf[1])
+        .then(sma2 => {
+          _.set(data, 'sma2', sma2.result.outReal)
+          return data;
+        });
+
+      return when.all([sma1_promise, sma2_promise]);
+    }
+  }
+
+  const macdTransform = data => {
+    return talibConf => {
+      return talib_calc(talibConf)
+        .then(macd => {
+          data.macd = {
+            line: _.last(macd.result.outMACD),
+            signal: _.last(macd.result.outMACDSignal)
+          }
+          return data
+        })
+    }
+  }
+
   switch (options.system) {
     case 'simple_sma':
-      action = simpleSmaStrategy(data, options);
+      return smaTransform(data)(talibConf)
+        .then(data => {
+          return simpleSmaStrategy(data, options)
+        })
       break;
     case 'sma':
-      action = smaStrategy(data, options);
+      return smaTransform(data)(talibConf)
+        .then(data => {
+          return smaStrategy(data, options)
+        })
       break;
     case 'price_sma':
-      action = priceSmaStrategy(data, options);
+      return smaTransform(data)(talibConf)
+        .then(data => {
+          return priceSmaStrategy(data, options)
+        })
       break;
     case 'macd':
-      action = macdStrategy(data, options);
+      return macdTransform(data)(talibConf)
+        .then(data => {
+          return macdStrategy(data, options)
+        })
       break;
   }
-  return action;
 }
 
 function getAction(params) {
@@ -154,7 +174,15 @@ function getAction(params) {
   return action;
 }
 
-function getTalibConfig(baseConfig, options) {
+function getTalibConfig(data, options) {
+  let startIdx = data.close_data.length - 1 - options.period[0];
+  startIdx = (startIdx > 0) ? startIdx : 0;
+  let baseConfig = {
+    startIdx,
+    endIdx: data.close_data.length - 1,
+    inReal: data.close_data
+  }
+
   let result;
   switch (options.system) {
     case 'simple_sma':
@@ -188,8 +216,8 @@ function getMacdTalibConfig(baseConfig) {
 }
 
 function getSmaTalibConfig(baseConfig, options) {
-  let result = [];
-  let sma1 = Object.assign(
+  const result = [];
+  const sma1 = Object.assign(
     {},
     baseConfig,
     {
@@ -197,7 +225,7 @@ function getSmaTalibConfig(baseConfig, options) {
       optInTimePeriod: options.period[1]
     }
   );
-  let sma2 = Object.assign(
+  const sma2 = Object.assign(
     {},
     baseConfig,
     {

@@ -13,3 +13,15 @@ single data input
 
 specific months
 ```npm run backtest -- --system=sma --period=9,26 --frequency=288 --month=3,4,5```
+
+
+# notes
+
+strategy:
+  getTalibConfig
+  extend data talib_calc
+  get action
+
+  getTalibConfig (has switch) -> getConfig (or here) -> macd.getConfig
+  getTransform -> talib_calc -> macd.calc()
+  actionForStrategy(data, config, transform, )
