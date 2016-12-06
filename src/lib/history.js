@@ -1,63 +1,63 @@
-const _ = require('lodash');
-const when = require('when');
+const _ = require('lodash')
+const when = require('when')
 
 class History {
   constructor(options) {
-    this.initialPrice = _.get(options, 'initialPrice');
-    this.initialBalance = _.get(options, 'initialBalance');
-    this.orderHistory = _.get(options, 'orderHistory') || [];
-    this.priceDeltaHistory = _.get(options, 'priceDeltaHistory') || [];
-    this.closeData = _.get(options, 'closeData') || [];
+    this.initialPrice = _.get(options, 'initialPrice')
+    this.initialBalance = _.get(options, 'initialBalance')
+    this.orderHistory = _.get(options, 'orderHistory') || []
+    this.priceDeltaHistory = _.get(options, 'priceDeltaHistory') || []
+    this.closeData = _.get(options, 'closeData') || []
   }
 
   recordPriceDelta(price) {
-    this.priceDeltaHistory.push(price);
+    this.priceDeltaHistory.push(price)
   }
 
   getPriceDeltaHistory() {
-    return this.priceDeltaHistory;
+    return this.priceDeltaHistory
   }
 
   recordInitialBalance(price) {
-    this.initialBalance = price;
+    this.initialBalance = price
   }
 
   getInitialBalance() {
-    return this.initialBalance;
+    return this.initialBalance
   }
 
   recordInitialPrice(price) {
-    this.initialPrice = price;
+    this.initialPrice = price
   }
 
   getInitialPrice() {
-    return this.initialPrice;
+    return this.initialPrice
   }
 
   recordOrder(order) {
-    this.orderHistory.push(order);
+    this.orderHistory.push(order)
   }
 
   getOrderHistory() {
-    return this.orderHistory;
+    return this.orderHistory
   }
 
   inPosition() {
-    const last = _.last(this.getOrderHistory());
-    return _.get(last, 'position') === 'enter';
+    const last = _.last(this.getOrderHistory())
+    return _.get(last, 'position') === 'enter'
   }
 
   getLastOrder() {
-    return _.last(this.orderHistory);
+    return _.last(this.orderHistory)
   }
 
   recordCloseData(data) {
-    this.closeData.push(data);
+    this.closeData.push(data)
   }
 
   getCloseData() {
-    return this.closeData;
+    return this.closeData
   }
 }
 
-module.exports = History;
+module.exports = History
